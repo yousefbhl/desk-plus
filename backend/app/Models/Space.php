@@ -9,5 +9,19 @@ class Space extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name', 'slug', 'description', 'cover_image',
+        'layout_type', 'total_price', 'is_featured', 'is_active',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_featured'  => 'boolean',
+            'is_active'    => 'boolean',
+            'total_price'  => 'decimal:2',
+        ];
+    }
+
+    public function products() { return $this->hasMany(Product::class); }
 }

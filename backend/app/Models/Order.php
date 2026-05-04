@@ -9,24 +9,49 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'status', 'total'];
+    protected $fillable = [
+        'reference', 'user_id', 'status',
+        'subtotal', 'discount_id', 'discount_amount',
+        'shipping_cost', 'tax', 'total',
+        'payment_method', 'payment_status', 'notes',
+    ];
 
-    public function items()
+    protected function casts(): array
     {
-        return $this->hasMany(OrderItem::class);
+        return [
+            'subtotal'        => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'shipping_cost'   => 'decimal:2',
+            'tax'             => 'decimal:2',
+            'total'           => 'decimal:2',
+        ];
     }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    // ── Relationships ────────────────────────────────────────────
+    public function user()            { return $this->belongsTo(User::class); }
+    public function discount()        { return $this->belongsTo(Discount::class); }
+    public function items()           { return $this->hasMany(OrderItem::class); }
+    public function shippingAddress() { return $this->hasOne(ShippingAddress::class); }
+    public function statusHistory()   { return $this->hasMany(OrderStatusHistory::class)->latest(); }
 
-    public static function monthlyRevenue()
+    // ── Scopes ───────────────────────────────────────────────────
+    public function scopeForUser($query, int $userId) { return $query->where('user_id', $userId); }
+
+    // ── Stats helper (admin dashboard) ──────────────────────────
+    public static function monthlyRevenue(): \Illuminate\Support\Collection
     {
         return static::query()
             ->selectRaw('MONTH(created_at) as month, SUM(total) as revenue')
-            ->groupBy('month')
-            ->orderBy('month')
+            ->where('status', '!=', 'cancelled')
+            ->where('payment_status', 'paid')
+            ->groupByRaw('MONTH(created_at)')
+            ->orderByRaw('MONTH(created_at)')
             ->get();
+    }
+
+    // ── Reference generator ──────────────────────────────────────
+    public static function generateReference(int $id): string
+    {
+        return 'DSK-' . str_pad($id, 5, '0', STR_PAD_LEFT);
     }
 }
