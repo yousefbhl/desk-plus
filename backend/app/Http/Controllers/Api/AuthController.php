@@ -3,58 +3,66 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function register(Request $request)
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
+            'name'     => 'required|string|max:100',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'phone'    => 'nullable|string|max:20',
         ]);
 
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            ...$data,
             'role' => 'customer',
         ]);
-        $user->assignRole('customer');
 
-        $token = $user->createToken('desk-token')->plainTextToken;
+        $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json(['token' => $token, 'user' => new UserResource($user)], 201);
+        return response()->json([
+            'user'  => new UserResource($user),
+            'token' => $token,
+        ], 201);
     }
 
-    public function login(LoginRequest $request): JsonResponse
+    public function login(Request $request)
     {
-        $user = User::where('email', $request->validated('email'))->first();
+        $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string',
+        ]);
 
-        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 422);
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            throw ValidationException::withMessages([
+                'email' => ['Invalid credentials. Please try again.'],
+            ]);
         }
 
-        $token = $user->createToken('desk-token')->plainTextToken;
+        $user  = Auth::user();
+        $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json(['token' => $token, 'user' => new UserResource($user)]);
+        return response()->json([
+            'user'  => new UserResource($user),
+            'token' => $token,
+        ]);
     }
 
-    public function logout(Request $request): JsonResponse
-    {
-        $request->user()?->currentAccessToken()?->delete();
-
-        return response()->json(['message' => 'Logged out']);
-    }
-
-    public function user(Request $request): UserResource
+    public function me(Request $request)
     {
         return new UserResource($request->user());
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Logged out successfully.']);
     }
 }
