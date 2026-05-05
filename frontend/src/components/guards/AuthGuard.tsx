@@ -1,21 +1,41 @@
-import { useEffect } from 'react'
-import type { ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
-import useAuth from '../../hooks/useAuth'
+import { useEffect } from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
 
-export default function AuthGuard({ children }: { children: ReactNode }) {
-  const user = useAuth((state) => state.user)
-  const fetchUser = useAuth((state) => state.fetchUser)
+// ── AuthGuard — requires any authenticated user ───────────────
+export function AuthGuard() {
+  const { isAuth, loading, fetchUser } = useAuthStore();
 
   useEffect(() => {
-    if (!user) {
-      void fetchUser()
-    }
-  }, [fetchUser, user])
+    fetchUser(); // verify token on mount
+  }, [fetchUser]);
 
-  if (!user) {
-    return <Navigate to="/login" replace />
+  // CRITICAL FIX: show spinner while fetchUser resolves
+  // Without this, the guard redirects to /login before the API call finishes
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#fff',
+      }}>
+        <div style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          border: '3px solid #E5E5E5',
+          borderTopColor: '#E63329',
+          animation: 'spin 0.7s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
-  return children
+  if (!isAuth) return <Navigate to="/login" replace />;
+
+  return <Outlet />;
 }
+

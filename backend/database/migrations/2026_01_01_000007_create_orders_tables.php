@@ -13,7 +13,8 @@ return new class extends Migration {
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // null = guest
             $table->string('status', 20)->default('pending'); // pending|preparing|shipping|delivered|cancelled
             $table->decimal('subtotal', 10, 2);
-            $table->foreignId('discount_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedBigInteger('discount_id')->nullable();
+            $table->foreign('discount_id')->references('id')->on('discounts')->nullOnDelete();
             $table->decimal('discount_amount', 10, 2)->default(0.00);
             $table->decimal('shipping_cost', 10, 2)->default(0.00);
             $table->decimal('tax', 10, 2)->default(0.00);

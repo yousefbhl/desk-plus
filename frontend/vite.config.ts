@@ -1,19 +1,36 @@
-import { defineConfig } from 'vite'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import babel from '@rolldown/plugin-babel'
+// frontend/vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    babel({ presets: [reactCompilerPreset()] })
-  ],
+  plugins: [react()],
   server: {
+    port: 5173,
     proxy: {
-      '/api': 'http://localhost:8000',
-      '/sanctum': 'http://localhost:8000',
-      '/login': 'http://localhost:8000',
-      '/logout': 'http://localhost:8000',
+      // Proxy API + Sanctum requests to Laravel during development
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/sanctum': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
-})
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
+});
+
+// ============================================================
+// frontend/.env.local  — LOCAL
+// ============================================================
+// VITE_API_URL=http://localhost:8000
+
+// ============================================================
+// frontend/.env.production  — PRODUCTION (set in Vercel)
+// ============================================================
+// VITE_API_URL=https://your-laravel-app.railway.app
