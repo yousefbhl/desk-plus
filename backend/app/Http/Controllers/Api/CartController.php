@@ -138,7 +138,7 @@ class CartController extends Controller
         $data['quantity'] = $data['quantity'] ?? 1;
 
         // Stock check
-        if ($data['variant_id']) {
+        if (!empty($data['variant_id'])) {
             $variant = ProductVariant::findOrFail($data['variant_id']);
             if ($variant->stock < $data['quantity']) {
                 return response()->json(['message' => 'Not enough stock for this variant.'], 422);
@@ -153,7 +153,7 @@ class CartController extends Controller
         $cart     = $this->resolveCart($request);
         $existing = CartItem::where('cart_id', $cart->id)
             ->where('product_id', $data['product_id'])
-            ->where('variant_id', $data['variant_id'])
+            ->where('variant_id', $data['variant_id'] ?? null)
             ->first();
 
         if ($existing) {
