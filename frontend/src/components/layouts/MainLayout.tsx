@@ -1,13 +1,17 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from '../ui/Navbar'
+import Footer from '../ui/Footer'
+import ToastContainer from '../ui/Toast'
 
 export default function MainLayout() {
   return (
-    <main>
+    <div className="min-h-screen flex flex-col bg-surface">
       <Navbar />
-      <div className="container">
+      <main className="flex-1">
         <Outlet />
-      </div>
-    </main>
+      </main>
+      <Footer />
+      <ToastContainer />
+    </div>
   )
 }

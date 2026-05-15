@@ -30,12 +30,21 @@ export const productsApi = {
 
   newArrivals: () =>
     api.get<Product[]>('/products/new-arrivals'),
+
+  reviews:     (slug: string) =>
+    api.get(`/products/${slug}/reviews`),
+
+  addReview:   (slug: string, data: { rating: number; comment?: string }) =>
+    api.post(`/products/${slug}/reviews`, data),
+
+  deleteReview: (id: number) =>
+    api.delete(`/reviews/${id}`),
 };
 
 // ── Catalog ──────────────────────────────────────────────────
 export const catalogApi = {
   categories: () => api.get('/categories'),
-  spaces:     (featured?: boolean) => api.get('/spaces', { params: { featured } }),
+  spaces:     (featured?: boolean) => api.get('/spaces', { params: featured ? { featured: 1 } : {} }),
   showSpace:  (slug: string) => api.get(`/spaces/${slug}`),
   tastes:     () => api.get('/tastes'),
 };
@@ -105,5 +114,8 @@ export const adminApi = {
     api.delete(`/admin/reviews/${id}`),
 
   exportReport: (type: string, format: string, from?: string, to?: string) =>
-    api.get('/admin/reports/export', { params: { type, format, from, to }, responseType: format === 'csv' ? 'blob' : 'json' }),
+    api.get('/admin/reports/export', {
+      params: { type, format, from, to },
+      responseType: format === 'csv' ? 'blob' : 'json',
+    }),
 };

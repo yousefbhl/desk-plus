@@ -1,41 +1,35 @@
-import { useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
+import { useEffect } from 'react'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useAuthStore } from '../../store/authStore'
 
-// ── AuthGuard — requires any authenticated user ───────────────
-export function AuthGuard() {
-  const { isAuth, loading, fetchUser } = useAuthStore();
-
-  useEffect(() => {
-    fetchUser(); // verify token on mount
-  }, [fetchUser]);
-
-  // CRITICAL FIX: show spinner while fetchUser resolves
-  // Without this, the guard redirects to /login before the API call finishes
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        background: '#fff',
-      }}>
-        <div style={{
-          width: 32,
-          height: 32,
-          borderRadius: '50%',
-          border: '3px solid #E5E5E5',
-          borderTopColor: '#E63329',
-          animation: 'spin 0.7s linear infinite',
-        }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  if (!isAuth) return <Navigate to="/login" replace />;
-
-  return <Outlet />;
+interface Props {
+  children?: React.ReactNode
 }
 
+export default function AuthGuard({ children }: Props) {
+  const { isAuth, loading, fetchUser } = useAuthStore()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!isAuth && localStorage.getItem('desk_token')) {
+      fetchUser()
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 rounded-lg btn-grad grid place-items-center text-white font-black text-sm">D+</div>
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuth) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />
+  }
+
+  return children ? <>{children}</> : <Outlet />
+}

@@ -221,14 +221,14 @@ DELETE /admin/reviews/:id
 
 ### Phase 0 — Foundation
 
-- [ ] **Task 1 — Install Tailwind CSS**
+- [x] **Task 1 — Install Tailwind CSS**
   - `npm install -D tailwindcss@3 postcss autoprefixer`
   - `npx tailwindcss init -p`
   - Configure `tailwind.config.js` with Desk+ design tokens (all colors above)
   - Add `@tailwind base/components/utilities` to `index.css`
   - Replace current `index.css` content with Desk+ base styles + all custom classes
 
-- [ ] **Task 2 — Update index.html + fix global setup**
+- [x] **Task 2 — Update index.html + fix global setup**
   - Add Inter font link to `frontend/index.html`
   - Add Material Symbols Outlined link to `frontend/index.html`
   - Fix `api/auth.ts`: endpoint `/api/user` → `/me` and `authApi` export wrapper
