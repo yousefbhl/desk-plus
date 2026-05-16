@@ -1,70 +1,69 @@
 import { create } from 'zustand'
-import { authApi } from '../api'
+import { persist } from 'zustand/middleware'
 import type { User } from '../types'
+import { authApi } from '../api'
 
 interface AuthState {
-  user: User | null
-  isAuth: boolean
-  loading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (data: { name: string; email: string; password: string; password_confirmation: string; phone?: string }) => Promise<void>
-  fetchUser: () => Promise<void>
-  logout: () => Promise<void>
+  user:       User | null
+  token:      string | null
+  loading:    boolean
+  isAuth:     boolean
+  setUser:    (user: User | null) => void
+  setLoading: (v: boolean) => void
+  login:      (email: string, password: string) => Promise<void>
+  register:   (data: { name: string; email: string; password: string; password_confirmation: string; phone?: string; role?: string }) => Promise<void>
+  logout:     () => Promise<void>
+  fetchUser:  () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
-  user: null,
-  isAuth: false,
-  loading: false,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user:    null,
+      token:   null,
+      // Start false if no token — no spinner on cold load
+      loading: !!localStorage.getItem('desk_token'),
+      isAuth:  false,
 
-  login: async (email, password) => {
-    set({ loading: true })
-    try {
-      const { data } = await authApi.login(email, password)
-      localStorage.setItem('desk_token', data.token)
-      set({ user: data.user, isAuth: true })
-    } finally {
-      set({ loading: false })
+      setUser:    (user) => set({ user, isAuth: !!user }),
+      setLoading: (v)    => set({ loading: v }),
+
+      login: async (email, password) => {
+        set({ loading: true })
+        const { data } = await authApi.login(email, password)
+        localStorage.setItem('desk_token', data.token)
+        set({ user: data.user, token: data.token, isAuth: true, loading: false })
+      },
+
+      register: async (formData) => {
+        set({ loading: true })
+        const { data } = await authApi.register(formData)
+        localStorage.setItem('desk_token', data.token)
+        set({ user: data.user, token: data.token, isAuth: true, loading: false })
+      },
+
+      logout: async () => {
+        try { await authApi.logout() } catch { /* ignore */ }
+        localStorage.removeItem('desk_token')
+        set({ user: null, token: null, isAuth: false, loading: false })
+        window.location.href = '/login'
+      },
+
+      fetchUser: async () => {
+        const token = localStorage.getItem('desk_token')
+        if (!token) { set({ loading: false, isAuth: false }); return }
+        try {
+          const { data } = await authApi.me()
+          set({ user: data, isAuth: true, loading: false })
+        } catch {
+          localStorage.removeItem('desk_token')
+          set({ user: null, token: null, isAuth: false, loading: false })
+        }
+      },
+    }),
+    {
+      name: 'desk-auth',
+      partialize: (state) => ({ token: state.token }),
     }
-  },
-
-  register: async (payload) => {
-    set({ loading: true })
-    try {
-      const { data } = await authApi.register(payload)
-      localStorage.setItem('desk_token', data.token)
-      set({ user: data.user, isAuth: true })
-    } finally {
-      set({ loading: false })
-    }
-  },
-
-  fetchUser: async () => {
-    const token = localStorage.getItem('desk_token')
-
-    if (!token) {
-      set({ user: null, isAuth: false, loading: false })
-      return
-    }
-
-    set({ loading: true })
-    try {
-      const { data } = await authApi.me()
-      set({ user: data, isAuth: true })
-    } catch {
-      localStorage.removeItem('desk_token')
-      set({ user: null, isAuth: false })
-    } finally {
-      set({ loading: false })
-    }
-  },
-
-  logout: async () => {
-    try {
-      await authApi.logout()
-    } finally {
-      localStorage.removeItem('desk_token')
-      set({ user: null, isAuth: false })
-    }
-  },
-}))
+  )
+)

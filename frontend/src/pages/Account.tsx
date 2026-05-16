@@ -36,7 +36,7 @@ export default function Account() {
             {/* Avatar */}
             <div className="flex flex-col items-center text-center mb-6 pb-6 border-b border-outline-variant">
               <div className="w-16 h-16 rounded-full bg-primary/10 grid place-items-center mb-3 border-2 border-primary">
-                <span className="h-display text-2xl text-primary">{user?.name.charAt(0)}</span>
+                <span className="h-display text-2xl text-primary">{user?.name?.charAt(0) ?? '?'}</span>
               </div>
               <p className="font-bold">{user?.name}</p>
               <p className="text-xs text-on-surface-variant mt-0.5">{user?.email}</p>

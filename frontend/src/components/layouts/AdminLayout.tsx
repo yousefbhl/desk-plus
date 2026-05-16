@@ -64,7 +64,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 grid place-items-center">
               <span className="text-xs font-bold text-primary">
-                {user?.name.charAt(0).toUpperCase()}
+                {user?.name?.charAt(0)?.toUpperCase() ?? '?'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
