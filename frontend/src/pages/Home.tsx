@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { productsApi, catalogApi } from '../api'
 import ProductCard from '../components/ui/ProductCard'
 import { ProductGridSkeleton } from '../components/ui/Skeleton'
-import type { Space, Taste } from '../types'
+import type { Space, Taste , Product } from '../types'
 
 const TRUST_ITEMS = [
   { icon: 'local_shipping', label: 'Free Delivery',    sub: 'Orders above 5,000 MAD' },
@@ -27,14 +27,14 @@ function getSpacePh(slug: string) {
 export default function Home() {
   const { data: featured, isLoading: loadingFeatured } = useQuery({
     queryKey: ['products', 'featured'],
-    queryFn: () => productsApi.featured().then((r) => r.data),
+    queryFn: () => productsApi.featured(),
   })
 
   const { data: newArrivals, isLoading: loadingNew } = useQuery({
     queryKey: ['products', 'new-arrivals'],
-    queryFn: () => productsApi.newArrivals().then((r) => r.data),
+    queryFn: () => productsApi.newArrivals(),
   })
-
+  
   const { data: spaces } = useQuery({
     queryKey: ['spaces'],
     queryFn: () => catalogApi.spaces().then((r) => r.data),
@@ -123,7 +123,7 @@ export default function Home() {
             <ProductGridSkeleton count={4} />
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {(featured ?? []).slice(0, 4).map((p, i) => (
+              {(featured ?? []).slice(0, 4).map((p: Product, i: number) => (
                 <ProductCard key={p.id} product={p} badge={i === 0 ? 'Best Seller' : undefined} />
               ))}
             </div>
@@ -226,7 +226,7 @@ export default function Home() {
             <ProductGridSkeleton count={4} />
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {(newArrivals ?? []).slice(0, 4).map((p) => (
+              {(newArrivals ?? []).slice(0, 4).map((p: Product) => (
                 <ProductCard key={p.id} product={p} badge="New" />
               ))}
             </div>

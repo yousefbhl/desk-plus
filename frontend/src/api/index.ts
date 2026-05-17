@@ -25,11 +25,15 @@ export const productsApi = {
   show:        (slug: string) =>
     api.get<Product>(`/products/${slug}`),
 
-  featured:    () =>
-    api.get<Product[]>('/products/featured'),
+  featured: () =>
+  api.get<any>('/products/featured').then(r =>
+    (Array.isArray(r.data) ? r.data : r.data.data) as Product[]
+  ),
 
   newArrivals: () =>
-    api.get<Product[]>('/products/new-arrivals'),
+  api.get<any>('/products/new-arrivals').then(r =>
+    (Array.isArray(r.data) ? r.data : r.data.data) as Product[]
+  ),
 
   reviews:     (slug: string) =>
     api.get(`/products/${slug}/reviews`),
