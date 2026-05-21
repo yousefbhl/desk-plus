@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Product } from '../../types'
 import { useCartStore } from '../../store/cartStore'
-import { useToastStore } from '../../store/toastStore'
+import { useUiStore } from '../../store/uiStore'
 
 const PH_CLASSES = ['ph-warm', 'ph-mesh-chair', 'ph-charcoal', 'ph-wood', 'ph-corp', 'ph-cream', 'ph-walnut']
 
@@ -18,24 +18,20 @@ interface Props {
 export default function ProductCard({ product, badge }: Props) {
   const [adding, setAdding] = useState(false)
   const { addItem } = useCartStore()
-  const { show } = useToastStore()
+  const { showToast, openCart } = useUiStore()
 
   const primaryImage = product.images?.find((i) => i.is_primary) ?? product.images?.[0]
   const discount = product.compare_price
     ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
     : null
 
-  const handleAdd = async (e: React.MouseEvent) => {
+  const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault()
     setAdding(true)
-    try {
-      await addItem(product.id)
-      show('Added to cart', 'success')
-    } catch {
-      show('Please sign in to add to cart', 'error')
-    } finally {
-      setAdding(false)
-    }
+    addItem(product)
+    showToast('Added to cart', 'success')
+    openCart()
+    setAdding(false)
   }
 
   return (

@@ -19,37 +19,37 @@ class DatabaseSeeder extends Seeder
     {
         // ── 1. USERS ─────────────────────────────────────────────
         $admin = User::firstOrCreate(
-            ['email' => 'admin@deskplus.ma'],
+            ['email' => 'admin@desk.plus'],
             [
                 'name'     => 'Admin CEO',
-                'password' => bcrypt('Admin@DeskPlus2025!'),
+                'password' => bcrypt('password'),
                 'role'     => 'admin',
             ]
         );
 
         $seller1 = User::firstOrCreate(
-            ['email' => 'seller1@deskplus.ma'],
+            ['email' => 'seller@desk.plus'],
             [
                 'name'     => 'Ahmed Seller',
-                'password' => bcrypt('Seller@123'),
+                'password' => bcrypt('password'),
                 'role'     => 'seller',
             ]
         );
 
         $seller2 = User::firstOrCreate(
-            ['email' => 'seller2@deskplus.ma'],
+            ['email' => 'seller2@desk.plus'],
             [
                 'name'     => 'Sara Seller',
-                'password' => bcrypt('Seller@123'),
+                'password' => bcrypt('password'),
                 'role'     => 'seller',
             ]
         );
 
         $customer = User::firstOrCreate(
-            ['email' => 'customer@deskplus.ma'],
+            ['email' => 'customer@desk.plus'],
             [
                 'name'     => 'Test Customer',
-                'password' => bcrypt('Customer@123'),
+                'password' => bcrypt('password'),
                 'role'     => 'customer',
             ]
         );
@@ -353,9 +353,11 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        $this->call(OrderSeeder::class);
+
         $this->command->info('✅ Desk+ seeded: admin, 2 sellers, 1 customer, 6 categories, 8 spaces, 6 tastes, 8 products');
-        $this->command->info('   Admin:    admin@deskplus.ma    / Admin@DeskPlus2025!');
-        $this->command->info('   Seller:   seller1@deskplus.ma / Seller@123');
-        $this->command->info('   Customer: customer@deskplus.ma / Customer@123');
+        $this->command->info('   Admin:    admin@desk.plus    / password');
+        $this->command->info('   Seller:   seller@desk.plus  / password');
+        $this->command->info('   Customer: customer@desk.plus / password');
     }
 }

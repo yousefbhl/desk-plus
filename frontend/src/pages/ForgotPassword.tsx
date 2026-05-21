@@ -1,122 +1,118 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useToastStore } from '../store/toastStore'
+import api from '../api/api'
 
 export default function ForgotPassword() {
-  const [step,  setStep]  = useState<1 | 2 | 3>(1)
   const [email, setEmail] = useState('')
-  const [code,  setCode]  = useState('')
-  const [pw,    setPw]    = useState('')
-  const [pwc,   setPwc]   = useState('')
-  const [loading, setLoading] = useState(false)
-  const { show } = useToastStore()
+  const [submitting, setSubmitting] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSendLink = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setLoading(false)
-    setStep(2)
-    show('Reset link sent to your email', 'success')
-  }
-
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (code.length < 4) { show('Enter the code from your email', 'error'); return }
-    setLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
-    setLoading(false)
-    setStep(3)
-  }
-
-  const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (pw !== pwc) { show('Passwords do not match', 'error'); return }
-    setLoading(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setLoading(false)
-    show('Password updated! Please sign in.', 'success')
-    window.location.href = '/login'
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    setError('')
+    try {
+      await api.post('/forgot-password', { email })
+      setSent(true)
+    } catch (err: any) {
+      setError(err.response?.data?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-ambient p-10">
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="grid grid-cols-3 gap-6 max-w-screen-xl w-full">
 
-        {/* Logo */}
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg btn-grad grid place-items-center text-white font-black text-sm">D+</div>
-          <span className="font-black tracking-tight">DESK+</span>
-        </div>
-
-        {/* Step indicator */}
-        <div className="flex items-center gap-2 mb-8">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-full grid place-items-center text-xs font-bold transition-colors ${n < step ? 'bg-primary text-white' : n === step ? 'bg-primary text-white pulse-ring' : 'bg-surface-container-high text-on-surface-variant'}`}>
-                {n < step ? <span className="material-symbols-outlined" style={{ fontSize: 14 }}>check</span> : n}
+        {/* Step 1 */}
+        <div className="bg-surface-container-lowest rounded-xl p-8 shadow-ambient relative">
+          <div className="absolute -top-3 left-8 px-3 py-1 btn-grad text-white text-[10px] font-bold uppercase tracking-widest-2 rounded-full">Step 1 &middot; Active</div>
+          <div className="text-xs font-bold uppercase tracking-widest-2 text-primary mt-2">Reset password</div>
+          <h2 className="h-display text-3xl mt-2">Forgot it? <span className="italic font-light">Happens.</span></h2>
+          {sent ? (
+            <>
+              <p className="text-sm text-on-surface-variant mt-3">Check your email! We sent a password reset link to <strong>{email}</strong>. It expires in 30 minutes.</p>
+              <div className="my-6 h-px bg-outline-variant"></div>
+              <div className="text-sm flex items-center justify-between">
+                <Link to="/login" className="text-on-surface-variant">&larr; Back to sign in</Link>
+                <Link to="/register" className="text-primary font-semibold underline">Create account</Link>
               </div>
-              {n < 3 && <div className={`flex-1 h-0.5 w-8 rounded-full ${n < step ? 'bg-primary' : 'bg-surface-container-high'}`} />}
-            </div>
-          ))}
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-on-surface-variant mt-3">Enter the email tied to your account. We'll send you a secure reset link — valid for 30 minutes.</p>
+              {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+              <div className="mt-6">
+                <label className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">Email</label>
+                <input className="w-full mt-1 h-12 px-4 rounded-xl bg-surface-container-low border border-outline-variant focus:border-primary" value={email} onChange={(e) => setEmail(e.target.value)}/>
+              </div>
+              <button className="w-full mt-5 btn-grad text-white font-bold py-3.5 rounded-xl uppercase tracking-widest-2 text-sm" onClick={handleSubmit} disabled={submitting}>{submitting ? 'Sending...' : 'Send reset link'}</button>
+              <div className="my-6 h-px bg-outline-variant"></div>
+              <div className="text-sm flex items-center justify-between">
+                <Link to="/login" className="text-on-surface-variant">&larr; Back to sign in</Link>
+                <Link to="/register" className="text-primary font-semibold underline">Create account</Link>
+              </div>
+              <div className="mt-6 p-3 rounded-lg bg-surface-container-low text-xs flex gap-2"><span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '18px' }}>info</span><span className="text-on-surface-variant">Not getting our emails? Add <strong>hello@deskplus.ma</strong> to your contacts.</span></div>
+            </>
+          )}
         </div>
 
-        {step === 1 && (
-          <form onSubmit={handleSendLink} className="space-y-5">
-            <div>
-              <h2 className="h-display text-2xl mb-1">FORGOT PASSWORD?</h2>
-              <p className="text-sm text-on-surface-variant">Enter your email and we'll send a reset link.</p>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Email Address</label>
-              <input type="email" required className="field" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
-            <button type="submit" disabled={loading} className="btn-grad w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
-              {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Send Reset Link →'}
-            </button>
-            <Link to="/login" className="block text-center text-sm text-on-surface-variant hover:text-on-surface">← Back to Sign In</Link>
-          </form>
-        )}
+        {/* Step 2 */}
+        <div className="bg-surface-container-low rounded-xl p-8 relative opacity-90">
+          <div className="absolute -top-3 left-8 px-3 py-1 bg-surface-container-high text-[10px] font-bold uppercase tracking-widest-2 rounded-full">Step 2</div>
+          <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant mt-2">Check inbox</div>
+          <h2 className="h-display text-3xl mt-2">We sent the link.</h2>
+          <p className="text-sm text-on-surface-variant mt-3">Open the email from Desk+ and tap the secure button. The link expires in 30 minutes.</p>
 
-        {step === 2 && (
-          <form onSubmit={handleVerifyCode} className="space-y-5">
-            <div className="w-12 h-12 rounded-full bg-primary/10 grid place-items-center mb-2">
-              <span className="material-symbols-outlined text-primary" style={{ fontSize: 24 }}>mark_email_read</span>
-            </div>
-            <div>
-              <h2 className="h-display text-2xl mb-1">CHECK INBOX</h2>
-              <p className="text-sm text-on-surface-variant">We sent a 6-digit code to <strong>{email}</strong></p>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Verification Code</label>
-              <input type="text" maxLength={6} className="field !text-center !font-mono !text-2xl !tracking-widest" placeholder="000000" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g,''))} />
-            </div>
-            <button type="submit" disabled={loading} className="btn-grad w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
-              {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Verify Code →'}
-            </button>
-            <button type="button" onClick={() => setStep(1)} className="block w-full text-center text-sm text-on-surface-variant hover:text-on-surface">Resend email</button>
-          </form>
-        )}
+          <div className="mt-6 bg-surface-container-lowest rounded-xl p-5 shadow-soft">
+            <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">From</div>
+            <div className="font-semibold text-sm">Desk+ Atelier &lt;security@deskplus.ma&gt;</div>
+            <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant mt-3">Subject</div>
+            <div className="font-semibold text-sm">Reset your Desk+ password</div>
+            <div className="mt-4 p-4 rounded-lg btn-grad text-white text-center font-bold text-sm uppercase tracking-widest-2">Reset password &rarr;</div>
+            <div className="text-[11px] text-on-surface-variant mt-3 text-center">Or paste: deskplus.ma/r/a8X2…sQ</div>
+          </div>
 
-        {step === 3 && (
-          <form onSubmit={handleReset} className="space-y-5">
-            <div>
-              <h2 className="h-display text-2xl mb-1">NEW PASSWORD</h2>
-              <p className="text-sm text-on-surface-variant">Choose a strong new password.</p>
+          <div className="mt-6 flex items-center justify-between text-sm">
+            <span className="text-on-surface-variant">Didn't get it?</span>
+            <button className="font-semibold text-primary">Resend in 00:42</button>
+          </div>
+        </div>
+
+        {/* Step 3 */}
+        <div className="bg-surface-container-low rounded-xl p-8 relative opacity-90">
+          <div className="absolute -top-3 left-8 px-3 py-1 bg-surface-container-high text-[10px] font-bold uppercase tracking-widest-2 rounded-full">Step 3</div>
+          <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant mt-2">New password</div>
+          <h2 className="h-display text-3xl mt-2">Set a new one.</h2>
+          <p className="text-sm text-on-surface-variant mt-3">12+ characters. We recommend a passphrase — three short words you'll remember.</p>
+
+          <div className="mt-5">
+            <label className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">New password</label>
+            <input type="password" className="w-full mt-1 h-12 px-4 rounded-xl bg-surface-container-lowest border border-outline-variant" defaultValue="••••••••••••"/>
+            <div className="flex gap-1.5 mt-2">
+              <div className="flex-1 h-1.5 rounded-full bg-emerald-500"></div>
+              <div className="flex-1 h-1.5 rounded-full bg-emerald-500"></div>
+              <div className="flex-1 h-1.5 rounded-full bg-emerald-500"></div>
+              <div className="flex-1 h-1.5 rounded-full bg-surface-container-high"></div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">New Password</label>
-              <input type="password" required minLength={8} className="field" placeholder="Min. 8 characters" value={pw} onChange={(e) => setPw(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Confirm Password</label>
-              <input type="password" required className="field" placeholder="Repeat password" value={pwc} onChange={(e) => setPwc(e.target.value)} />
-            </div>
-            <button type="submit" disabled={loading} className="btn-grad w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
-              {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Update Password →'}
-            </button>
-          </form>
-        )}
+            <div className="text-xs text-emerald-700 font-semibold mt-1">Strong</div>
+          </div>
+
+          <div className="mt-4">
+            <label className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">Confirm new password</label>
+            <input type="password" className="w-full mt-1 h-12 px-4 rounded-xl bg-surface-container-lowest border-2 border-emerald-500" defaultValue="••••••••••••"/>
+            <div className="text-xs text-emerald-700 mt-1 flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check_circle</span>Passwords match</div>
+          </div>
+
+          <ul className="mt-5 space-y-1.5 text-xs">
+            <li className="flex items-center gap-2 text-emerald-700"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>12+ characters</li>
+            <li className="flex items-center gap-2 text-emerald-700"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>Mix of letters &amp; numbers</li>
+            <li className="flex items-center gap-2 text-on-surface-variant"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>circle</span>One symbol (optional)</li>
+          </ul>
+
+          <button className="w-full mt-6 btn-grad text-white font-bold py-3.5 rounded-xl uppercase tracking-widest-2 text-sm">Update password &amp; sign in</button>
+        </div>
       </div>
     </div>
   )

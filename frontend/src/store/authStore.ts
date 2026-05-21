@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'desk-auth',
-      partialize: (state) => ({ token: state.token }),
+      partialize: (state) => ({ token: state.token, user: state.user }),
     }
   )
 )

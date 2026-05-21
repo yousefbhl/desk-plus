@@ -1,72 +1,82 @@
 import { create } from 'zustand'
-import { cartApi } from '../api'
-import type { Cart } from '../types'
+import { persist } from 'zustand/middleware'
+import type { Product } from '../types'
 
-interface CartState {
-  cart:         Cart | null
-  loading:      boolean
-  fetchCart:    () => Promise<void>
-  addItem:      (productId: number, variantId?: number, quantity?: number) => Promise<void>
-  updateItem:   (cartItemId: number, quantity: number) => Promise<void>
-  removeItem:   (cartItemId: number) => Promise<void>
-  clearCart:    () => Promise<void>
-  applyCoupon:  (code: string) => Promise<void>
-  removeCoupon: () => Promise<void>
-  itemCount:    () => number
-  total:        () => number
+export interface LocalCartItem {
+  productId: number
+  name: string
+  slug: string
+  price: number
+  comparePrice?: number | null
+  image?: string | null
+  quantity: number
 }
 
-export const useCartStore = create<CartState>()((set, get) => ({
-  cart:    null,
-  loading: false,
+interface CartState {
+  items: LocalCartItem[]
+  addItem:    (product: Product, qty?: number) => void
+  removeItem: (productId: number) => void
+  updateQty:  (productId: number, qty: number) => void
+  clear:      () => void
+  total:      () => number
+  itemCount:  () => number
+}
 
-  fetchCart: async () => {
-    set({ loading: true })
-    try {
-      const { data } = await cartApi.get()
-      set({ cart: data })
-    } catch {
-      // Not logged in — cart stays null
-    } finally {
-      set({ loading: false })
-    }
-  },
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
 
-  addItem: async (productId, variantId, quantity = 1) => {
-    set({ loading: true })
-    try {
-      const { data } = await cartApi.addItem(productId, variantId, quantity)
-      set({ cart: data })
-    } finally {
-      set({ loading: false })
-    }
-  },
+      addItem: (product, qty = 1) => {
+        const items = get().items
+        const existing = items.find((i) => i.productId === product.id)
+        if (existing) {
+          set({
+            items: items.map((i) =>
+              i.productId === product.id
+                ? { ...i, quantity: i.quantity + qty }
+                : i
+            ),
+          })
+        } else {
+          set({
+            items: [
+              ...items,
+              {
+                productId: product.id,
+                name: product.name,
+                slug: product.slug,
+                price: product.price,
+                comparePrice: product.compare_price,
+                image: product.images?.[0]?.url ?? null,
+                quantity: qty,
+              },
+            ],
+          })
+        }
+      },
 
-  updateItem: async (cartItemId, quantity) => {
-    const { data } = await cartApi.updateItem(cartItemId, quantity)
-    set({ cart: data })
-  },
+      removeItem: (productId) =>
+        set({ items: get().items.filter((i) => i.productId !== productId) }),
 
-  removeItem: async (cartItemId) => {
-    const { data } = await cartApi.removeItem(cartItemId)
-    set({ cart: data })
-  },
+      updateQty: (productId, qty) => {
+        if (qty <= 0) {
+          set({ items: get().items.filter((i) => i.productId !== productId) })
+        } else {
+          set({
+            items: get().items.map((i) =>
+              i.productId === productId ? { ...i, quantity: qty } : i
+            ),
+          })
+        }
+      },
 
-  clearCart: async () => {
-    await cartApi.clear()
-    set({ cart: null })
-  },
+      clear: () => set({ items: [] }),
 
-  applyCoupon: async (code) => {
-    const { data } = await cartApi.applyCoupon(code)
-    set({ cart: data })
-  },
+      total: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
-  removeCoupon: async () => {
-    const { data } = await cartApi.removeCoupon()
-    set({ cart: data })
-  },
-
-  itemCount: () => get().cart?.item_count ?? 0,
-  total:     () => get().cart?.total ?? 0,
-}))
+      itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
+    }),
+    { name: 'desk-cart' }
+  )
+)

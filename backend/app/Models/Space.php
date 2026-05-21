@@ -23,5 +23,6 @@ class Space extends Model
         ];
     }
 
-    public function products() { return $this->hasMany(Product::class); }
+    public function products()      { return $this->hasMany(Product::class); }
+    public function pivotProducts() { return $this->belongsToMany(Product::class, 'product_space')->withPivot('sort_order')->withTimestamps(); }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -53,6 +54,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::get('/me',     [AuthController::class, 'me']);
     Route::post('/logout',[AuthController::class, 'logout']);
+
+    // Wishlist
+    Route::get('/me/wishlist',               [WishlistController::class, 'index']);
+    Route::post('/me/wishlist/{product}',    [WishlistController::class, 'toggle']);
 
     // Cart
     Route::get('/cart',                      [CartController::class, 'show']);

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useCartStore } from '../../store/cartStore'
+import { useUiStore } from '../../store/uiStore'
 import CartDrawer from './CartDrawer'
 
 const NAV_LINKS = [
@@ -11,13 +12,13 @@ const NAV_LINKS = [
 ]
 
 export default function Navbar() {
-  const [cartOpen, setCartOpen]   = useState(false)
   const [menuOpen, setMenuOpen]   = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const navigate = useNavigate()
 
   const { isAuth, user, logout } = useAuthStore()
   const itemCount = useCartStore((s) => s.itemCount())
+  const { isCartDrawerOpen, openCart, closeCart } = useUiStore()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,7 +95,7 @@ export default function Navbar() {
 
             {/* Cart */}
             <button
-              onClick={() => setCartOpen(true)}
+              onClick={openCart}
               className="relative w-10 h-10 grid place-items-center rounded-full hover:bg-surface-container-high transition-colors"
               aria-label="Open cart"
             >
@@ -159,7 +160,7 @@ export default function Navbar() {
         )}
       </header>
 
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <CartDrawer open={isCartDrawerOpen} onClose={closeCart} />
     </>
   )
 }

@@ -16,10 +16,10 @@ class AdminUserSeeder extends Seeder
         }
 
         $admin = User::firstOrCreate(
-            ['email' => 'admin@deskplus.local'],
+            ['email' => 'admin@desk.plus'],
             [
                 'name' => 'Desk Admin',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password'),
                 'role' => 'admin',
             ]
         );

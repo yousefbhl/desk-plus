@@ -47,23 +47,32 @@ class Product extends Model
     public function reviews()        { return $this->hasMany(Review::class)->where('is_approved', true); }
     public function orderItems()     { return $this->hasMany(OrderItem::class); }
     public function cartItems()      { return $this->hasMany(CartItem::class); }
+    public function spaces()         { return $this->belongsToMany(Space::class, 'product_space')->withPivot('sort_order')->withTimestamps(); }
+    public function wishlistedBy()   { return $this->belongsToMany(User::class, 'wishlists')->withTimestamps(); }
 
     // ── Scopes ───────────────────────────────────────────────────
     public function scopeFilter(Builder $query, Request $request): Builder
     {
         return $query
             ->when($request->category_id,  fn (Builder $q, $id)   => $q->where('category_id', $id))
+            ->when($request->category,     fn (Builder $q, $slug) => $q->whereHas('category', fn ($c) => $c->where('slug', $slug)))
             ->when($request->space_id,     fn (Builder $q, $id)   => $q->where('space_id', $id))
+            ->when($request->space,        fn (Builder $q, $slug) => $q->whereHas('space', fn ($s) => $s->where('slug', $slug)))
             ->when($request->taste_id,     fn (Builder $q, $id)   => $q->where('taste_id', $id))
+            ->when($request->taste,        fn (Builder $q, $slug) => $q->whereHas('taste', fn ($t) => $t->where('slug', $slug)))
             ->when($request->min_price,    fn (Builder $q, $price) => $q->where('price', '>=', $price))
             ->when($request->max_price,    fn (Builder $q, $price) => $q->where('price', '<=', $price))
             ->when($request->in_stock,     fn (Builder $q)         => $q->where('stock', '>', 0))
             ->when($request->is_featured,  fn (Builder $q)         => $q->where('is_featured', true))
             ->when($request->search,       fn (Builder $q, $term)  => $q->where('name', 'like', "%{$term}%"))
+            ->when($request->color,        fn (Builder $q, $color) => $q->whereHas('variants', fn ($v) => $v->where('color', $color)))
+            ->when($request->material,     fn (Builder $q, $mat)   => $q->whereHas('variants', fn ($v) => $v->where('material', $mat)))
             ->when($request->sort, function (Builder $q, string $sort) {
                 match ($sort) {
                     'price_asc'    => $q->orderBy('price'),
                     'price_desc'   => $q->orderByDesc('price'),
+                    'newest'       => $q->latest(),
+                    'rating'       => $q->orderByDesc('avg_rating'),
                     'popular'      => $q->orderByDesc('review_count'),
                     default        => $q->latest(),
                 };

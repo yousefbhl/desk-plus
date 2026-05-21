@@ -71,6 +71,19 @@ class ProductResource extends JsonResource
                     'sort_order' => $s->sort_order,
                 ])
             ),
+            'reviews'       => $this->whenLoaded('reviews', fn () =>
+                $this->reviews->map(fn ($r) => [
+                    'id'         => $r->id,
+                    'rating'     => $r->rating,
+                    'comment'    => $r->comment,
+                    'user'       => $r->relationLoaded('user') ? [
+                        'id'   => $r->user->id,
+                        'name' => $r->user->name,
+                    ] : null,
+                    'created_at' => $r->created_at,
+                ])
+            ),
+            'is_wishlisted' => $this->when($this->getAttribute('is_wishlisted') !== null, fn () => (bool) $this->getAttribute('is_wishlisted')),
             'created_at'    => $this->created_at,
             'updated_at'    => $this->updated_at,
         ];
