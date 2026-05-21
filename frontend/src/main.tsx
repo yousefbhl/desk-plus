@@ -18,7 +18,18 @@ const queryClient = new QueryClient({
 // Only rehydrate auth if a token actually exists — no wasted API call on login page
 import('./store/authStore').then(({ useAuthStore }) => {
   if (localStorage.getItem('desk_token')) {
-    useAuthStore.getState().fetchUser()
+    useAuthStore.getState().fetchUser().then(() => {
+      if (useAuthStore.getState().isAuth) {
+        import('./api').then(({ wishlistApi }) => {
+          wishlistApi.list().then((r) => {
+            const products = (r.data?.data ?? r.data) as { id: number }[]
+            import('./store/wishlistStore').then(({ useWishlistStore }) => {
+              useWishlistStore.getState().setProductIds(products.map((p) => p.id))
+            })
+          }).catch(() => {})
+        })
+      }
+    })
   } else {
     useAuthStore.getState().setLoading(false)
   }

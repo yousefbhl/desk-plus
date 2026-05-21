@@ -13,6 +13,7 @@ class Order extends Model
         'reference', 'user_id', 'status',
         'subtotal', 'discount_id', 'discount_amount',
         'shipping_cost', 'tax', 'total',
+        'shipping_address',
         'payment_method', 'payment_status', 'notes',
     ];
 
@@ -22,8 +23,9 @@ class Order extends Model
             'subtotal'        => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'shipping_cost'   => 'decimal:2',
-            'tax'             => 'decimal:2',
-            'total'           => 'decimal:2',
+            'tax'              => 'decimal:2',
+            'total'            => 'decimal:2',
+            'shipping_address' => 'array',
         ];
     }
 

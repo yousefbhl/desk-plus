@@ -101,6 +101,13 @@ export interface Product {
   images?: ProductImage[]
   variants?: ProductVariant[]
   specifications?: ProductSpecification[]
+  reviews?: Array<{
+    id: number
+    user?: { name: string } | null
+    rating: number
+    comment?: string | null
+    created_at?: string
+  }>
   created_at?: string
   updated_at?: string
 }
@@ -114,6 +121,10 @@ export interface ProductFilters {
   min_price?: number | string
   max_price?: number | string
   sort?: string
+  color?: string
+  material?: string
+  in_stock?: boolean | number
+  is_featured?: boolean | number
   space_id?: number | string
   taste_id?: number | string
   page?: number | string

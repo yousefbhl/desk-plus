@@ -22,13 +22,19 @@ class ProductController extends Controller
     }
 
     // GET /api/products/{slug}
-    public function show(string $slug)
+    public function show(Request $request, string $slug)
     {
         $product = Product::with([
             'category', 'space', 'taste', 'seller',
             'images', 'variants', 'specifications',
             'reviews' => fn ($q) => $q->with('user')->latest()->limit(10),
         ])->where('slug', $slug)->active()->firstOrFail();
+
+        $isWishlisted = false;
+        if ($request->user()) {
+            $isWishlisted = $product->wishlistedBy()->where('user_id', $request->user()->id)->exists();
+        }
+        $product->setAttribute('is_wishlisted', $isWishlisted);
 
         return new ProductResource($product);
     }

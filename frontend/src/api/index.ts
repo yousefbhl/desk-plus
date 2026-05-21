@@ -53,7 +53,7 @@ export const catalogApi = {
   tastes:     () => api.get('/tastes'),
 };
 
-// ── Cart ─────────────────────────────────────────────────────
+// ── Cart (server-side, used when authenticated) ─────────────
 export const cartApi = {
   get:          () => api.get<Cart>('/cart'),
   addItem:      (product_id: number, variant_id?: number, quantity = 1) =>
@@ -67,6 +67,18 @@ export const cartApi = {
   removeCoupon: () => api.delete<Cart>('/cart/coupon'),
   validateCoupon: (code: string, subtotal: number) =>
     api.post('/discounts/validate', { code, subtotal }),
+};
+
+// ── Seller ──────────────────────────────────────────────────
+export const sellerApi = {
+  stats:    () => api.get('/admin/stats'),
+  products: (params?: object) => api.get<PaginatedResponse<Product>>('/products', { params: { ...params as Record<string, unknown>, mine: 1 } }),
+};
+
+// ── Wishlist ────────────────────────────────────────────────
+export const wishlistApi = {
+  list:   () => api.get('/me/wishlist'),
+  toggle: (productId: number) => api.post(`/me/wishlist/${productId}`),
 };
 
 // ── Orders ───────────────────────────────────────────────────

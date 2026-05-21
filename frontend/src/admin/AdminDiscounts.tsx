@@ -1,164 +1,69 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { adminApi } from '../api'
-import { TableRowSkeleton } from '../components/ui/Skeleton'
-import { useToastStore } from '../store/toastStore'
-
-const EMPTY = { code: '', type: 'percentage' as 'percentage' | 'fixed', value: '', min_order_amount: '', max_uses: '', expires_at: '', is_active: true }
+import { useAdminDiscounts } from '../hooks/useAdmin'
 
 export default function AdminDiscounts() {
-  const [modal, setModal]   = useState(false)
-  const [editing, setEditing] = useState<any | null>(null)
-  const [form, setForm]       = useState(EMPTY)
-  const qc = useQueryClient()
-  const { show } = useToastStore()
+  const { data, isLoading } = useAdminDiscounts()
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin-discounts'],
-    queryFn: () => adminApi.discounts().then((r) => r.data),
-  })
-
-  const saveMutation = useMutation({
-    mutationFn: (payload: any) =>
-      editing ? adminApi.updateDiscount(editing.id, payload) : adminApi.createDiscount(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-discounts'] })
-      show(editing ? 'Discount updated' : 'Discount created', 'success')
-      close()
-    },
-    onError: (e: any) => show(e?.response?.data?.message ?? 'Error', 'error'),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => adminApi.deleteDiscount(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-discounts'] }); show('Deleted', 'success') },
-  })
-
-  const open  = (d?: any) => { setEditing(d ?? null); setForm(d ? { ...d, value: String(d.value), min_order_amount: String(d.min_order_amount ?? ''), max_uses: String(d.max_uses ?? ''), expires_at: d.expires_at?.slice(0,10) ?? '' } : EMPTY); setModal(true) }
-  const close = () => { setModal(false); setEditing(null) }
-  const setF  = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((f) => ({ ...f, [k]: e.target.value }))
-
-  const handleSave = () => {
-    saveMutation.mutate({ ...form, value: +form.value, min_order_amount: form.min_order_amount ? +form.min_order_amount : null, max_uses: form.max_uses ? +form.max_uses : null })
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
-  const discounts = data?.data ?? []
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest-2 text-primary mb-1">Manage</p>
-          <h1 className="h-display text-4xl">DISCOUNTS</h1>
-        </div>
-        <button onClick={() => open()} className="btn-grad px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2">
-          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
-          New Discount
-        </button>
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div><h1 className="h-display text-3xl">Discounts &amp; Promotions</h1><p className="text-sm text-on-surface-variant">8 active codes · 3 scheduled · 4 automatic rules</p></div>
+        <button className="btn-grad text-white font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest-2 flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>add</span>Create promotion</button>
       </div>
 
-      <div className="bg-surface-container-lowest rounded-xl shadow-ambient overflow-hidden">
+      {/* Featured banner builder */}
+      <div className="bg-white rounded-xl p-6 shadow-soft mb-6 grid grid-cols-12 gap-6">
+        <div className="col-span-5">
+          <div className="text-xs uppercase tracking-widest-2 font-bold text-primary">Currently running</div>
+          <h2 className="h-display text-2xl mt-1">Ramadan Atelier · 20% off Kendo</h2>
+          <p className="text-sm text-on-surface-variant mt-2">Auto-applied at checkout · Min basket 2,000 MAD · Ends in <strong className="text-on-surface">3d 14h</strong></p>
+
+          <div className="grid grid-cols-3 gap-3 mt-5">
+            <div className="bg-surface-container-low rounded-lg p-3"><div className="text-xs text-on-surface-variant uppercase tracking-widest-2">Uses</div><div className="text-xl font-black">142</div></div>
+            <div className="bg-surface-container-low rounded-lg p-3"><div className="text-xs text-on-surface-variant uppercase tracking-widest-2">Revenue</div><div className="text-xl font-black">87K</div></div>
+            <div className="bg-surface-container-low rounded-lg p-3"><div className="text-xs text-on-surface-variant uppercase tracking-widest-2">Avg. saving</div><div className="text-xl font-black">580</div></div>
+          </div>
+
+          <div className="mt-5 flex gap-2"><button className="btn-grad text-white font-bold px-4 py-2 rounded-lg text-sm">Edit</button><button className="border border-outline-variant font-semibold px-4 py-2 rounded-lg text-sm">Duplicate</button><button className="border border-outline-variant text-primary font-semibold px-4 py-2 rounded-lg text-sm">Pause</button></div>
+        </div>
+        <div className="col-span-7 bg-[#1c1b1b] rounded-xl p-8 relative overflow-hidden">
+          <div className="text-[10px] uppercase tracking-widest-2 text-white/50 mb-2">Customer-facing preview</div>
+          <div className="font-black text-white text-4xl leading-tight">RAMADAN<br /><span className="italic font-light text-primary">atelier</span></div>
+          <div className="text-white/70 italic mt-2">&mdash; 20% off the Kendo collection.</div>
+          <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg btn-grad text-white text-xs font-bold uppercase tracking-widest-2">Shop now &rarr;</div>
+          <svg className="absolute -bottom-10 -right-10 w-44 h-44 opacity-20" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" stroke="#ba0a0d" strokeWidth="0.5" /><circle cx="50" cy="50" r="36" stroke="#ba0a0d" strokeWidth="0.5" /><circle cx="50" cy="50" r="22" stroke="#ba0a0d" strokeWidth="0.5" /></svg>
+        </div>
+      </div>
+
+      {/* Promo list */}
+      <div className="bg-white rounded-xl shadow-soft">
+        <div className="px-6 py-5 border-b border-outline-variant flex items-center gap-3">
+          <h3 className="h-display text-lg flex-1">All promotions</h3>
+          <button className="chip border border-outline-variant bg-white">Type: All <span className="material-symbols-outlined" style={{fontSize:14}}>expand_more</span></button>
+          <button className="chip border border-outline-variant bg-white">Status: All <span className="material-symbols-outlined" style={{fontSize:14}}>expand_more</span></button>
+        </div>
         <table className="w-full text-sm">
-          <thead>
-            <tr className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant border-b border-outline-variant/60">
-              <th className="text-left px-4 py-3">Code</th>
-              <th className="text-left px-4 py-3">Type</th>
-              <th className="text-right px-4 py-3">Value</th>
-              <th className="text-right px-4 py-3">Min Order</th>
-              <th className="text-right px-4 py-3">Uses</th>
-              <th className="text-left px-4 py-3">Expires</th>
-              <th className="text-left px-4 py-3">Status</th>
-              <th className="px-4 py-3" />
-            </tr>
+          <thead className="text-xs uppercase tracking-widest-2 text-on-surface-variant">
+            <tr className="bg-surface-container-low"><th className="text-left px-6 py-3">Name / Code</th><th className="text-left py-3">Type</th><th className="text-left py-3">Conditions</th><th className="text-right py-3">Uses</th><th className="text-right py-3">Revenue</th><th className="text-left py-3">Schedule</th><th className="text-left py-3 px-6">Status</th></tr>
           </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={i} cols={8} />)
-            ) : discounts.length === 0 ? (
-              <tr><td colSpan={8} className="text-center py-16 text-on-surface-variant">No discounts yet</td></tr>
-            ) : discounts.map((d: any) => (
-              <tr key={d.id} className="border-b border-outline-variant/40 hover:bg-surface-container-low transition-colors">
-                <td className="px-4 py-3 font-mono font-black text-primary">{d.code}</td>
-                <td className="px-4 py-3 capitalize text-on-surface-variant">{d.type}</td>
-                <td className="px-4 py-3 text-right font-bold">{d.type === 'percentage' ? `${d.value}%` : `${d.value} MAD`}</td>
-                <td className="px-4 py-3 text-right text-on-surface-variant">{d.min_order_amount ? `${d.min_order_amount} MAD` : '—'}</td>
-                <td className="px-4 py-3 text-right text-on-surface-variant">{d.usage_count ?? 0}{d.max_uses ? `/${d.max_uses}` : ''}</td>
-                <td className="px-4 py-3 text-on-surface-variant">{d.expires_at ? new Date(d.expires_at).toLocaleDateString() : '—'}</td>
-                <td className="px-4 py-3">
-                  <span className={`chip text-xs ${d.is_active ? 'bg-green-50 text-green-700' : 'bg-surface-container-high text-on-surface-variant'}`}>
-                    {d.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-1 justify-end">
-                    <button onClick={() => open(d)} className="w-8 h-8 rounded-lg hover:bg-surface-container-high grid place-items-center text-on-surface-variant">
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
-                    </button>
-                    <button onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(d.id) }} className="w-8 h-8 rounded-lg hover:bg-red-50 grid place-items-center text-on-surface-variant hover:text-primary">
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+          <tbody className="divide-y divide-outline-variant/60">
+            <tr><td className="px-6 py-3"><div className="font-bold">Ramadan Atelier</div><div className="text-xs font-mono text-primary">Auto-apply</div></td><td>20% off collection</td><td className="text-xs text-on-surface-variant">Kendo only · Min 2,000 MAD</td><td className="text-right font-bold">142</td><td className="text-right font-black">87,420 MAD</td><td className="text-xs">Mar 1 – Mar 22</td><td className="px-6"><span className="chip bg-emerald-100 text-emerald-700">&#9679; Active</span></td></tr>
+            <tr><td className="px-6 py-3"><div className="font-bold">Welcome 100</div><div className="text-xs font-mono text-primary">WELCOME100</div></td><td>100 MAD off</td><td className="text-xs text-on-surface-variant">1st order · No minimum</td><td className="text-right font-bold">218</td><td className="text-right font-black">412,330 MAD</td><td className="text-xs">Evergreen</td><td className="px-6"><span className="chip bg-emerald-100 text-emerald-700">&#9679; Active</span></td></tr>
+            <tr><td className="px-6 py-3"><div className="font-bold">Free Casa Delivery</div><div className="text-xs font-mono text-primary">CASA-FREE</div></td><td>Free shipping</td><td className="text-xs text-on-surface-variant">Casablanca only · Min 1,500 MAD</td><td className="text-right font-bold">87</td><td className="text-right font-black">142,800 MAD</td><td className="text-xs">Evergreen</td><td className="px-6"><span className="chip bg-emerald-100 text-emerald-700">&#9679; Active</span></td></tr>
+            <tr><td className="px-6 py-3"><div className="font-bold">Premium Tier — Always 10</div><div className="text-xs font-mono text-primary">Auto-apply</div></td><td>10% off all</td><td className="text-xs text-on-surface-variant">Premium members</td><td className="text-right font-bold">312</td><td className="text-right font-black">218,400 MAD</td><td className="text-xs">Evergreen</td><td className="px-6"><span className="chip bg-emerald-100 text-emerald-700">&#9679; Active</span></td></tr>
+            <tr><td className="px-6 py-3"><div className="font-bold">Bundle: Desk + Chair</div><div className="text-xs font-mono text-primary">BUNDLE15</div></td><td>15% off bundle</td><td className="text-xs text-on-surface-variant">Desk + Chair together</td><td className="text-right font-bold">28</td><td className="text-right font-black">64,820 MAD</td><td className="text-xs">Feb 14 – Mar 14</td><td className="px-6"><span className="chip bg-emerald-100 text-emerald-700">&#9679; Active</span></td></tr>
+            <tr><td className="px-6 py-3"><div className="font-bold">Spring Mood — Coco</div><div className="text-xs font-mono text-primary">SPRING25</div></td><td>25% off</td><td className="text-xs text-on-surface-variant">Coco style</td><td className="text-right">&mdash;</td><td className="text-right">&mdash;</td><td className="text-xs">Apr 1 – Apr 30</td><td className="px-6"><span className="chip bg-blue-100 text-blue-700">Scheduled</span></td></tr>
+            <tr><td className="px-6 py-3"><div className="font-bold">Winter Sale 2024</div><div className="text-xs font-mono text-on-surface-variant">WINTER24</div></td><td>30% off</td><td className="text-xs text-on-surface-variant">Storewide · Expired</td><td className="text-right font-bold">412</td><td className="text-right font-black">682,150 MAD</td><td className="text-xs">Dec 1 – Jan 7</td><td className="px-6"><span className="chip bg-gray-200 text-gray-700">Ended</span></td></tr>
           </tbody>
         </table>
       </div>
-
-      {/* Modal */}
-      {modal && (
-        <>
-          <div className="fixed inset-0 bg-on-surface/30 z-40 flex items-center justify-center p-4">
-            <div className="bg-surface-container-lowest rounded-2xl shadow-ambient-lg w-full max-w-md p-8 animate-fade-up">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-black text-lg">{editing ? 'Edit Discount' : 'New Discount'}</h2>
-                <button onClick={close} className="w-8 h-8 grid place-items-center rounded-full hover:bg-surface-container-high">
-                  <span className="material-symbols-outlined" style={{ fontSize: 20 }}>close</span>
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Code</label>
-                  <input className="field !font-mono !uppercase" placeholder="SUMMER30" value={form.code} onChange={setF('code')} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Type</label>
-                    <select className="field cursor-pointer" value={form.type} onChange={setF('type')}>
-                      <option value="percentage">Percentage</option>
-                      <option value="fixed">Fixed Amount</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Value</label>
-                    <input type="number" className="field" placeholder={form.type === 'percentage' ? '20' : '500'} value={form.value} onChange={setF('value')} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Min Order (MAD)</label>
-                    <input type="number" className="field" value={form.min_order_amount} onChange={setF('min_order_amount')} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Max Uses</label>
-                    <input type="number" className="field" value={form.max_uses} onChange={setF('max_uses')} />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Expires At</label>
-                  <input type="date" className="field" value={form.expires_at} onChange={setF('expires_at')} />
-                </div>
-              </div>
-              <div className="flex gap-3 mt-6">
-                <button onClick={close} className="flex-1 py-3 rounded-xl font-bold border-2 border-outline-variant hover:bg-surface-container-high transition-colors text-sm">Cancel</button>
-                <button onClick={handleSave} disabled={saveMutation.isPending} className="flex-1 btn-grad py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                  {saveMutation.isPending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : (editing ? 'Update' : 'Create')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+    </>
   )
 }

@@ -1,159 +1,138 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ordersApi } from '../api'
 import { useAuthStore } from '../store/authStore'
-import type { Order } from '../types'
-
-const STATUS_CLASS: Record<string, string> = {
-  pending:   'badge-pending',
-  preparing: 'badge-preparing',
-  shipped:   'badge-shipped',
-  delivered: 'badge-delivered',
-  cancelled: 'badge-cancelled',
-}
-
-const TABS = ['Overview', 'My Orders', 'Settings']
+import { useMyOrders } from '../hooks/useOrders'
 
 export default function Account() {
-  const [tab, setTab] = useState('Overview')
   const { user, logout } = useAuthStore()
-
-  const { data: ordersData } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => ordersApi.list().then((r) => r.data),
-  })
-
+  const { data: ordersData, isLoading: ordersLoading } = useMyOrders()
   const orders = ordersData?.data ?? []
 
+  const initials = user?.name
+    ? user.name
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : '??'
+
+  const statusClasses: Record<string, string> = {
+    pending:    'bg-amber-100 text-amber-700',
+    processing: 'bg-blue-100 text-blue-700',
+    shipped:    'bg-purple-100 text-purple-700',
+    delivered:  'bg-emerald-100 text-emerald-700',
+    cancelled:  'bg-red-100 text-red-700',
+  }
+
   return (
-    <div className="max-w-screen-2xl mx-auto px-8 py-12">
+    <section className="max-w-screen-2xl mx-auto px-8 py-10">
       <div className="grid grid-cols-12 gap-8">
-
         {/* Sidebar */}
-        <aside className="col-span-12 lg:col-span-3">
-          <div className="bg-surface-container-lowest rounded-2xl shadow-ambient p-6">
-            {/* Avatar */}
-            <div className="flex flex-col items-center text-center mb-6 pb-6 border-b border-outline-variant">
-              <div className="w-16 h-16 rounded-full bg-primary/10 grid place-items-center mb-3 border-2 border-primary">
-                <span className="h-display text-2xl text-primary">{user?.name?.charAt(0) ?? '?'}</span>
-              </div>
-              <p className="font-bold">{user?.name}</p>
-              <p className="text-xs text-on-surface-variant mt-0.5">{user?.email}</p>
-              <span className="chip bg-surface-container-high text-on-surface-variant mt-2 capitalize">{user?.role}</span>
-            </div>
-
-            <nav className="space-y-1">
-              {TABS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${tab === t ? 'bg-primary/8 text-primary' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'}`}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                    {t === 'Overview' ? 'grid_view' : t === 'My Orders' ? 'receipt_long' : 'settings'}
-                  </span>
-                  {t}
-                </button>
-              ))}
-              <button
-                onClick={logout}
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-primary hover:bg-primary/5 transition-colors text-left"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>logout</span>
-                Logout
-              </button>
-            </nav>
+        <aside className="col-span-3">
+          <div className="bg-surface-container-lowest rounded-xl p-6 shadow-ambient text-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-surface-container-high border-2 border-primary grid place-items-center font-black text-2xl">{initials}</div>
+            <div className="font-bold mt-3">{user?.name ?? 'Guest'}</div>
+            <div className="text-xs text-on-surface-variant">{user?.email ?? ''}</div>
+            <div className="chip bg-primary-fixed text-primary mt-3 mx-auto inline-flex">Premium member</div>
           </div>
+          <nav className="mt-4 bg-surface-container-lowest rounded-xl p-3 shadow-ambient text-sm">
+            <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface-container-high border-l-4 border-primary text-primary font-bold"><span className="material-symbols-outlined">dashboard</span>Overview</a>
+            <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container-low"><span className="material-symbols-outlined">receipt_long</span>My Orders <span className="ml-auto text-xs text-on-surface-variant">{orders.length}</span></a>
+            <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container-low"><span className="material-symbols-outlined">favorite</span>Wishlist <span className="ml-auto text-xs text-on-surface-variant">8</span></a>
+            <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container-low"><span className="material-symbols-outlined">home_work</span>Saved Addresses</a>
+            <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container-low"><span className="material-symbols-outlined">settings</span>Profile Settings</a>
+            <div className="h-px bg-outline-variant my-2"></div>
+            <button onClick={() => logout()} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary font-semibold hover:bg-surface-container-low w-full"><span className="material-symbols-outlined">logout</span>Logout</button>
+          </nav>
         </aside>
 
         {/* Main */}
-        <div className="col-span-12 lg:col-span-9">
+        <div className="col-span-9">
+          <h1 className="h-display text-4xl">Welcome back, {user?.name?.split(' ')[0] ?? 'there'}.</h1>
+          <p className="text-on-surface-variant mt-1">Here's what's happening with your account today.</p>
 
-          {/* Overview */}
-          {tab === 'Overview' && (
-            <div>
-              <h2 className="h-display text-3xl mb-6">OVERVIEW</h2>
-              <div className="grid grid-cols-3 gap-4 mb-8">
-                {[
-                  { label: 'Total Orders', value: orders.length, icon: 'receipt_long' },
-                  { label: 'Total Spent', value: `${orders.reduce((s, o) => s + o.total, 0).toLocaleString()} MAD`, icon: 'payments' },
-                  { label: 'Member Since', value: new Date().getFullYear().toString(), icon: 'calendar_today' },
-                ].map((s) => (
-                  <div key={s.label} className="bg-surface-container-lowest rounded-xl shadow-ambient p-5">
-                    <span className="material-symbols-outlined text-primary mb-2" style={{ fontSize: 24 }}>{s.icon}</span>
-                    <p className="h-display text-2xl">{s.value}</p>
-                    <p className="text-xs text-on-surface-variant">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <h3 className="font-bold mb-4">Recent Orders</h3>
-              {orders.slice(0, 3).map((o: Order) => (
-                <div key={o.id} className="flex items-center justify-between p-4 bg-surface-container-lowest rounded-xl mb-3 shadow-ambient">
-                  <div>
-                    <p className="font-mono font-bold text-sm text-primary">#DK-{String(o.id).padStart(5, '0')}</p>
-                    <p className="text-xs text-on-surface-variant mt-0.5">{new Date(o.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <span className={`chip ${STATUS_CLASS[o.status] ?? 'badge-pending'} capitalize`}>{o.status}</span>
-                  <p className="font-black">{o.total.toLocaleString()} MAD</p>
-                  <Link to={`/orders/${o.id}`} className="text-sm text-primary font-semibold hover:underline">Track</Link>
-                </div>
-              ))}
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-5 mt-8">
+            <div className="bg-surface-container-lowest rounded-xl p-6 shadow-ambient">
+              <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">Total Orders</div>
+              <div className="text-4xl font-black mt-2">{orders.length}</div>
+              <div className="text-xs text-emerald-700 mt-1 flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span>+3 this quarter</div>
             </div>
-          )}
+            <div className="bg-surface-container-lowest rounded-xl p-6 shadow-ambient">
+              <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">Wishlist Items</div>
+              <div className="text-4xl font-black mt-2">8</div>
+              <div className="text-xs text-on-surface-variant mt-1">2 on sale right now</div>
+            </div>
+            <div className="bg-surface-container-lowest rounded-xl p-6 shadow-ambient border-2 border-primary">
+              <div className="text-xs font-bold uppercase tracking-widest-2 text-primary">Points Earned</div>
+              <div className="text-4xl font-black mt-2 text-primary">1,842</div>
+              <div className="text-xs text-on-surface-variant mt-1">158 to next tier</div>
+            </div>
+          </div>
 
-          {/* My Orders */}
-          {tab === 'My Orders' && (
-            <div>
-              <h2 className="h-display text-3xl mb-6">MY ORDERS</h2>
-              {orders.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-20 text-center">
-                  <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 56 }}>receipt_long</span>
-                  <p className="font-bold">No orders yet</p>
-                  <Link to="/products" className="btn-grad px-6 py-2.5 rounded-xl font-bold text-sm">Start Shopping</Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {orders.map((o: Order) => (
-                    <div key={o.id} className="bg-surface-container-lowest rounded-xl shadow-ambient p-6">
-                      <div className="flex items-start justify-between gap-4 mb-4">
-                        <div>
-                          <p className="font-mono font-bold text-primary">#DK-{String(o.id).padStart(5, '0')}</p>
-                          <p className="text-xs text-on-surface-variant">{new Date(o.created_at).toLocaleDateString()}</p>
+          {/* Recent orders */}
+          <div className="mt-10 bg-surface-container-lowest rounded-xl shadow-ambient overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5">
+              <h2 className="h-display text-lg">Recent orders</h2>
+              <a className="text-sm font-semibold text-primary">View all →</a>
+            </div>
+
+            {ordersLoading ? (
+              <div className="flex justify-center py-12">
+                <span className="material-symbols-outlined animate-spin text-primary" style={{ fontSize: '32px' }}>progress_activity</span>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="text-center py-12 text-on-surface-variant text-sm">No orders yet</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase tracking-widest-2 text-on-surface-variant">
+                  <tr className="bg-surface-container-low"><th className="text-left px-6 py-3">Order</th><th className="text-left py-3">Items</th><th className="text-left py-3">Status</th><th className="text-left py-3">Date</th><th className="text-right py-3 px-6">Total</th></tr>
+                </thead>
+                <tbody>
+                  {orders.map((order, idx) => (
+                    <tr key={order.id} className={idx % 2 === 1 ? 'bg-surface-container-low' : ''}>
+                      <td className="px-6 py-4 font-mono font-bold text-primary">
+                        <Link to={`/orders/${order.id}`}>#{order.reference ?? `DK-${String(order.id).padStart(5, '0')}`}</Link>
+                      </td>
+                      <td>
+                        <div className="flex">
+                          {(order.items ?? []).slice(0, 3).map((item, i) => (
+                            <div key={item.id} className={`w-9 h-9 rounded-lg bg-surface-container-high border-2 border-white grid place-items-center text-[10px] font-bold text-on-surface-variant${i < 2 ? ' -mr-2' : ''}`}>
+                              {item.product_name.charAt(0)}
+                            </div>
+                          ))}
+                          {(order.items?.length ?? 0) > 3 && (
+                            <div className="w-9 h-9 rounded-lg bg-surface-container-high border-2 border-white grid place-items-center text-[10px] font-bold text-on-surface-variant">+{(order.items?.length ?? 0) - 3}</div>
+                          )}
                         </div>
-                        <span className={`chip capitalize ${STATUS_CLASS[o.status] ?? 'badge-pending'}`}>{o.status}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="font-black">{o.total.toLocaleString()} MAD</p>
-                        <Link to={`/orders/${o.id}`} className="btn-grad px-4 py-2 rounded-xl text-xs font-bold">
-                          Track Order →
-                        </Link>
-                      </div>
-                    </div>
+                      </td>
+                      <td><span className={`chip ${statusClasses[order.status.toLowerCase()] ?? 'bg-gray-100 text-gray-700'}`}>{order.status}</span></td>
+                      <td className="text-on-surface-variant">{new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                      <td className="text-right px-6 font-black">{order.total.toLocaleString()} MAD</td>
+                    </tr>
                   ))}
-                </div>
-              )}
-            </div>
-          )}
+                </tbody>
+              </table>
+            )}
+          </div>
 
-          {/* Settings */}
-          {tab === 'Settings' && (
-            <div>
-              <h2 className="h-display text-3xl mb-6">SETTINGS</h2>
-              <div className="bg-surface-container-lowest rounded-2xl shadow-ambient p-8 space-y-5">
-                {[['Full Name', user?.name ?? ''], ['Email', user?.email ?? ''], ['Phone', user?.phone ?? '']].map(([label, val]) => (
-                  <div key={label}>
-                    <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">{label}</label>
-                    <input className="field" defaultValue={val} />
-                  </div>
-                ))}
-                <button className="btn-grad px-8 py-3 rounded-xl font-bold text-sm">Save Changes</button>
-              </div>
-            </div>
-          )}
+          {/* Quick actions */}
+          <div className="grid grid-cols-3 gap-5 mt-8">
+            <Link to="/order-tracking" className="bg-surface-container-lowest rounded-xl p-5 shadow-ambient hover:-translate-y-0.5 transition flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl btn-grad text-white grid place-items-center"><span className="material-symbols-outlined">local_shipping</span></div>
+              <div><div className="font-bold">Track Order</div><div className="text-xs text-on-surface-variant">Live carrier updates</div></div>
+            </Link>
+            <a className="bg-surface-container-lowest rounded-xl p-5 shadow-ambient hover:-translate-y-0.5 transition flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-surface-container-high text-on-surface grid place-items-center"><span className="material-symbols-outlined">rate_review</span></div>
+              <div><div className="font-bold">Write a Review</div><div className="text-xs text-on-surface-variant">3 items eligible</div></div>
+            </a>
+            <a className="bg-surface-container-lowest rounded-xl p-5 shadow-ambient hover:-translate-y-0.5 transition flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-surface-container-high text-on-surface grid place-items-center"><span className="material-symbols-outlined">card_giftcard</span></div>
+              <div><div className="font-bold">Refer a Friend</div><div className="text-xs text-on-surface-variant">Earn 200 points</div></div>
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

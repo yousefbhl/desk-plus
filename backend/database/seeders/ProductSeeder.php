@@ -15,10 +15,10 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         $seller = User::firstOrCreate(
-            ['email' => 'seller@deskplus.local'],
+            ['email' => 'seller@desk.plus'],
             [
                 'name' => 'Demo Seller',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password'),
                 'role' => 'seller',
             ]
         );
