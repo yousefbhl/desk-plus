@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\ProductResource;
 use App\Http\Resources\UserResource;
 use App\Models\Order;
 use App\Models\Product;
@@ -130,6 +131,42 @@ class AdminController extends Controller
         if ($request->role)   $query->where('role', $request->role);
         if ($request->search) {
             $query->where(fn ($q) =>
+                $q->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('email', 'like', "%{$request->search}%")
+            );
+        }
+
+        return UserResource::collection($query->paginate($request->get('per_page', 20)));
+    }
+
+    // GET /api/admin/products
+    public function products(Request $request)
+    {
+        $query = Product::with(['category', 'seller', 'images'])
+            ->withCount('orderItems')
+            ->latest();
+
+        if ($request->search)
+            $query->where('name', 'like', "%{$request->search}%");
+        if ($request->category)
+            $query->whereHas('category', fn($q) => $q->where('slug', $request->category));
+        if ($request->status === 'active')     $query->where('is_active', true);
+        if ($request->status === 'inactive')   $query->where('is_active', false);
+        if ($request->status === 'low_stock')  $query->where('stock', '<=', 5)->where('stock', '>', 0);
+        if ($request->status === 'out_of_stock') $query->where('stock', 0);
+
+        return ProductResource::collection($query->paginate($request->get('per_page', 20)));
+    }
+
+    // GET /api/admin/sellers
+    public function sellers(Request $request)
+    {
+        $query = User::where('role', 'seller')
+            ->withCount('products')
+            ->latest();
+
+        if ($request->search) {
+            $query->where(fn($q) =>
                 $q->where('name', 'like', "%{$request->search}%")
                   ->orWhere('email', 'like', "%{$request->search}%")
             );

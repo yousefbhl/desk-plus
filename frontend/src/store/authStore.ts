@@ -54,7 +54,8 @@ export const useAuthStore = create<AuthState>()(
         if (!token) { set({ loading: false, isAuth: false }); return }
         try {
           const { data } = await authApi.me()
-          set({ user: data, isAuth: true, loading: false })
+          const user = (data as any)?.data ?? data
+          set({ user, isAuth: true, loading: false })
         } catch {
           localStorage.removeItem('desk_token')
           set({ user: null, token: null, isAuth: false, loading: false })

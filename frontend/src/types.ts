@@ -173,18 +173,32 @@ export interface ShippingAddress {
   last_name: string
   email?: string
   phone: string
-  address: string
+  address_line1: string
+  address_line2?: string
   city: string
+  state?: string
   postal_code?: string
-  region?: string
   country?: string
 }
 
 export interface CheckoutPayload {
-  shipping_address?: ShippingAddress
-  shipping?: ShippingAddress
-  delivery_method?: string
-  payment_method: string
+  items: Array<{
+    product_id: number
+    product_name: string
+    quantity: number
+    unit_price: number
+  }>
+  shipping_address: {
+    full_name: string
+    address_line1: string
+    city: string
+    region?: string
+    postal_code?: string
+    phone: string
+  }
+  payment_method: 'cod' | 'card' | 'cash' | 'bank_transfer'
+  subtotal: number
+  total: number
   coupon_code?: string
   notes?: string
 }

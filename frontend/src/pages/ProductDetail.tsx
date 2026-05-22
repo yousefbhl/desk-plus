@@ -179,7 +179,7 @@ export default function ProductDetail() {
               <div className="flex items-center bg-surface-container-high rounded-xl h-12">
                 <button className="w-12 h-12 grid place-items-center" onClick={() => setQty((q) => Math.max(1, q - 1))}><span className="material-symbols-outlined">remove</span></button>
                 <span className="w-10 text-center font-bold">{qty}</span>
-                <button className="w-12 h-12 grid place-items-center" onClick={() => setQty((q) => q + 1)}><span className="material-symbols-outlined">add</span></button>
+                <button className="w-12 h-12 grid place-items-center" onClick={() => setQty((q) => Math.min(product.stock, q + 1))}><span className="material-symbols-outlined">add</span></button>
               </div>
               <button
                 className="flex-1 btn-grad text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 uppercase tracking-widest-2 text-sm"

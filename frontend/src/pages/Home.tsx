@@ -1,6 +1,9 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Home() {
+  const [curatorIndex, setCuratorIndex] = useState(0)
+  const navigate = useNavigate()
   return (
     <div>
       {/* HERO */}
@@ -141,8 +144,8 @@ export default function Home() {
             <h2 className="h-display text-4xl">Selected by our curator.</h2>
           </div>
           <div className="flex gap-1">
-            <button className="w-10 h-10 grid place-items-center rounded-full border border-outline-variant hover:bg-surface-container"><span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_left</span></button>
-            <button className="w-10 h-10 grid place-items-center rounded-full btn-grad text-white"><span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_right</span></button>
+            <button onClick={() => setCuratorIndex(i => Math.max(0, i - 1))} className={`w-10 h-10 grid place-items-center rounded-full border border-outline-variant hover:bg-surface-container${curatorIndex === 0 ? ' opacity-40' : ''}`}><span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_left</span></button>
+            <button onClick={() => setCuratorIndex(i => i + 1)} className="w-10 h-10 grid place-items-center rounded-full btn-grad text-white"><span className="material-symbols-outlined" style={{ fontSize: 20 }}>chevron_right</span></button>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-6">
@@ -254,7 +257,7 @@ export default function Home() {
           <div className="col-span-5">
             <div className="flex gap-2 bg-white p-2 rounded-xl">
               <input className="flex-1 h-12 px-4 text-on-surface bg-transparent outline-none" placeholder="your@email.com" />
-              <button className="bg-[#1c1b1b] text-white font-bold px-6 rounded-lg uppercase tracking-widest-2 text-sm">Subscribe</button>
+              <button onClick={(e) => { const inp = (e.currentTarget.previousElementSibling as HTMLInputElement); if (inp?.value) { inp.value = ''; alert('Thank you for subscribing!') } }} className="bg-[#1c1b1b] text-white font-bold px-6 rounded-lg uppercase tracking-widest-2 text-sm">Subscribe</button>
             </div>
             <div className="mt-3 text-xs text-white/70">Unsubscribe anytime · No spam · 4,200+ subscribers</div>
           </div>

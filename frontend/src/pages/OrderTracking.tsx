@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useOrder } from '../hooks/useOrders'
 
-const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered'] as const
+const STATUS_STEPS = ['pending', 'preparing', 'shipping', 'delivered'] as const
 
 function getStepIndex(status: string): number {
   const idx = STATUS_STEPS.indexOf(status.toLowerCase() as typeof STATUS_STEPS[number])
@@ -14,7 +14,7 @@ function getProgressWidth(status: string): string {
 }
 
 const stepIcons = ['check', 'check', 'local_shipping', 'inventory_2']
-const stepLabels = ['Order Confirmed', 'Preparing', 'Shipped', 'Delivered']
+const stepLabels = ['Order Placed', 'Preparing', 'Shipping', 'Delivered']
 
 export default function OrderTracking() {
   const { id } = useParams()
@@ -46,7 +46,9 @@ export default function OrderTracking() {
   const itemCount = order.items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0
   const statusClasses: Record<string, string> = {
     pending:    'bg-amber-100 text-amber-700',
+    preparing:  'bg-blue-100 text-blue-700',
     processing: 'bg-blue-100 text-blue-700',
+    shipping:   'bg-purple-100 text-purple-700',
     shipped:    'bg-purple-100 text-purple-700',
     delivered:  'bg-emerald-100 text-emerald-700',
     cancelled:  'bg-red-100 text-red-700',
@@ -120,7 +122,8 @@ export default function OrderTracking() {
               {order.shipping_address ? (
                 <>
                   <div className="font-bold mt-1">{order.shipping_address.first_name} {order.shipping_address.last_name}</div>
-                  <div className="text-sm text-on-surface-variant">{order.shipping_address.address}<br />{order.shipping_address.city}{order.shipping_address.postal_code ? ` ${order.shipping_address.postal_code}` : ''}{order.shipping_address.country ? `, ${order.shipping_address.country}` : ''}</div>
+                  <div className="text-sm text-on-surface-variant">{order.shipping_address.address_line1}<br />{order.shipping_address.city}{order.shipping_address.postal_code ? ` ${order.shipping_address.postal_code}` : ''}{order.shipping_address.country ? `, ${order.shipping_address.country}` : ''}</div>
+                  {order.shipping_address.phone && <div className="text-sm text-on-surface-variant mt-1">{order.shipping_address.phone}</div>}
                 </>
               ) : (
                 <div className="text-sm text-on-surface-variant mt-1">No shipping address provided</div>

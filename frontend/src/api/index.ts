@@ -105,7 +105,9 @@ export const adminApi = {
     api.delete(`/admin/users/${id}`),
 
   products: (params?: object) =>
-    api.get<PaginatedResponse<Product>>('/products', { params }),
+    api.get<PaginatedResponse<Product>>('/admin/products', { params }),
+  sellers: (params?: object) =>
+    api.get<PaginatedResponse<User>>('/admin/sellers', { params }),
   createProduct: (data: object) =>
     api.post<Product>('/admin/products', data),
   updateProduct: (id: number, data: object) =>

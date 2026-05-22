@@ -1,10 +1,17 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useSellerStats } from '../hooks/useSeller'
 import { useAuthStore } from '../store/authStore'
+import { useUiStore } from '../store/uiStore'
 
 export default function SellerDashboard() {
   const { data: stats, isLoading } = useSellerStats()
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
+  const { showToast } = useUiStore()
+
+  const now = new Date()
+  const dayName = now.toLocaleDateString('en-US', { weekday: 'long' })
+  const monthDay = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
 
   if (isLoading) {
     return (
@@ -19,12 +26,12 @@ export default function SellerDashboard() {
       {/* Hero */}
       <div className="bg-white border-2 border-outline-variant rounded-xl p-8 mb-6 grid grid-cols-12 gap-6">
         <div className="col-span-7">
-          <p className="text-primary font-bold uppercase tracking-widest-2 text-xs mb-2">Tuesday · March 14</p>
+          <p className="text-primary font-bold uppercase tracking-widest-2 text-xs mb-2">{dayName} · {monthDay}</p>
           <h1 className="h-display text-4xl">Salam, {user?.name?.split(' ')[0] ?? 'Seller'}.</h1>
           <p className="text-on-surface-variant mt-2">Your atelier sold <strong className="text-primary">12 pieces yesterday</strong>. Two products are running low — let{"'"}s restock before the weekend.</p>
           <div className="mt-6 flex gap-3">
             <Link to="/seller/products" className="btn-grad text-white font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest-2">Manage products</Link>
-            <a className="border border-outline-variant font-semibold px-5 py-2.5 rounded-xl text-sm">View orders</a>
+            <button onClick={() => showToast('Seller orders view coming soon', 'info')} className="border border-outline-variant font-semibold px-5 py-2.5 rounded-xl text-sm">View orders</button>
           </div>
         </div>
         <div className="col-span-5 grid grid-cols-2 gap-3">
@@ -109,7 +116,7 @@ export default function SellerDashboard() {
         <div className="col-span-8 bg-white rounded-xl shadow-soft overflow-hidden">
           <div className="flex items-center justify-between p-5 border-b border-outline-variant">
             <h2 className="h-display text-lg">Orders to fulfill</h2>
-            <a className="text-sm font-bold text-primary">All orders →</a>
+            <button onClick={() => showToast('Seller orders view coming soon', 'info')} className="text-sm font-bold text-primary">All orders →</button>
           </div>
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-widest-2 text-on-surface-variant bg-surface-container-low">
@@ -152,7 +159,7 @@ export default function SellerDashboard() {
               </div>
             </div>
           </div>
-          <a className="block mt-5 pt-4 border-t border-outline-variant text-center text-sm font-bold text-primary">Open inbox →</a>
+          <button onClick={() => showToast('Inbox coming soon', 'info')} className="block w-full mt-5 pt-4 border-t border-outline-variant text-center text-sm font-bold text-primary">Open inbox →</button>
         </div>
       </div>
     </>

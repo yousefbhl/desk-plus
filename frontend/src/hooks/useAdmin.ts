@@ -31,8 +31,8 @@ export function useAdminUsers(params?: object) {
 
 export function useAdminSellers(params?: object) {
   return useQuery({
-    queryKey: ['admin', 'users', 'sellers', params],
-    queryFn: () => adminApi.users({ ...params as Record<string, unknown>, role: 'seller' }).then((r) => r.data),
+    queryKey: ['admin', 'sellers', params],
+    queryFn: () => adminApi.sellers(params).then((r) => r.data),
   })
 }
 
@@ -57,10 +57,54 @@ export function useUpdateOrderStatus() {
 export function useApproveSeller() {
   const qc = useQueryClient()
   return useMutation({
+    mutationFn: (id: number) =>
+      adminApi.updateUserRole(id, 'seller').then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'sellers'] })
+    },
+  })
+}
+
+export function useUpdateUserRole() {
+  const qc = useQueryClient()
+  return useMutation({
     mutationFn: ({ id, role }: { id: number; role: string }) =>
       adminApi.updateUserRole(id, role).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+  })
+}
+
+export function useCreateDiscount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: object) =>
+      adminApi.createDiscount(data).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'discounts'] })
+    },
+  })
+}
+
+export function useUpdateDiscount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: object }) =>
+      adminApi.updateDiscount(id, data).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'discounts'] })
+    },
+  })
+}
+
+export function useDeleteDiscount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) =>
+      adminApi.deleteDiscount(id).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'discounts'] })
     },
   })
 }

@@ -44,40 +44,37 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'shipping.first_name'   => 'required|string|max:80',
-            'shipping.last_name'    => 'required|string|max:80',
-            'shipping.email'        => 'required|email',
-            'shipping.phone'        => 'required|string|max:20',
-            'shipping.address_line1'=> 'required|string',
-            'shipping.address_line2'=> 'nullable|string',
-            'shipping.city'         => 'required|string',
-            'shipping.state'        => 'nullable|string',
-            'shipping.country'      => 'required|string',
-            'shipping.postal_code'  => 'nullable|string',
-            'payment_method'        => 'required|in:card,cash,bank_transfer',
-            'coupon_code'           => 'nullable|string',
-            'notes'                 => 'nullable|string',
+            'items'                          => 'required|array|min:1',
+            'items.*.product_id'             => 'required|integer|exists:products,id',
+            'items.*.product_name'           => 'required|string|max:200',
+            'items.*.quantity'               => 'required|integer|min:1',
+            'items.*.unit_price'             => 'required|numeric|min:0',
+            'shipping_address'               => 'required|array',
+            'shipping_address.full_name'     => 'required|string|max:160',
+            'shipping_address.address_line1' => 'required|string|max:255',
+            'shipping_address.city'          => 'required|string|max:100',
+            'shipping_address.region'        => 'nullable|string|max:100',
+            'shipping_address.postal_code'   => 'nullable|string|max:20',
+            'shipping_address.phone'         => 'required|string|max:20',
+            'payment_method'                 => 'required|string|in:cod,card,cash,bank_transfer',
+            'subtotal'                       => 'required|numeric|min:0',
+            'total'                          => 'required|numeric|min:0',
+            'coupon_code'                    => 'nullable|string',
+            'notes'                          => 'nullable|string',
         ]);
 
-        // Resolve cart
-        $cart = Cart::with('items.product')
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
-
-        if ($cart->items->isEmpty()) {
-            return response()->json(['message' => 'Cart is empty.'], 422);
-        }
-
-        // Validate stock & calculate subtotal
-        $subtotal = 0;
-        foreach ($cart->items as $item) {
-            if ($item->product->stock < $item->quantity) {
+        // Validate stock for each item
+        foreach ($data['items'] as $item) {
+            $product = \App\Models\Product::find($item['product_id']);
+            if (!$product || $product->stock < $item['quantity']) {
                 return response()->json([
-                    'message' => "Insufficient stock for: {$item->product->name}",
+                    'message' => "Insufficient stock for: {$item['product_name']}",
                 ], 422);
             }
-            $subtotal += $item->product->price * $item->quantity;
         }
+
+        // Calculate subtotal from items (server-side verification)
+        $subtotal = collect($data['items'])->sum(fn ($i) => $i['unit_price'] * $i['quantity']);
 
         // Apply discount
         $discountAmount = 0;
@@ -86,72 +83,65 @@ class OrderController extends Controller
         if (!empty($data['coupon_code'])) {
             $discountModel = Discount::where('code', strtoupper($data['coupon_code']))->first();
 
-            if (!$discountModel || !$discountModel->isValid()) {
-                return response()->json(['message' => 'Invalid or expired discount code.'], 422);
+            if ($discountModel && $discountModel->isValid()) {
+                $discountAmount = $discountModel->apply($subtotal);
             }
-
-            // Check per-user limit
-            if ($discountModel->per_user_limit) {
-                $timesUsed = DiscountUsage::where('discount_id', $discountModel->id)
-                    ->where('user_id', $request->user()->id)
-                    ->count();
-
-                if ($timesUsed >= $discountModel->per_user_limit) {
-                    return response()->json(['message' => 'You have already used this discount code.'], 422);
-                }
-            }
-
-            $discountAmount = $discountModel->apply($subtotal);
         }
 
-        $shippingCost = $subtotal >= 5000 ? 0 : 50; // free shipping over 5000 MAD
+        $shippingCost = $subtotal >= 5000 ? 0 : 50;
         $total        = $subtotal - $discountAmount + $shippingCost;
 
-        DB::transaction(function () use (
-            $request, $data, $cart, $subtotal,
-            $discountModel, $discountAmount, $shippingCost, $total
-        ) {
-            // Create order
+        $order = DB::transaction(function () use ($request, $data, $subtotal, $discountModel, $discountAmount, $shippingCost, $total) {
+            // Create order with shipping_address as JSON
             $order = Order::create([
-                'reference'       => '',  // filled by observer
-                'user_id'         => $request->user()->id,
-                'status'          => 'pending',
-                'subtotal'        => $subtotal,
-                'discount_id'     => $discountModel?->id,
-                'discount_amount' => $discountAmount,
-                'shipping_cost'   => $shippingCost,
-                'tax'             => 0,
-                'total'           => $total,
-                'payment_method'  => $data['payment_method'],
-                'payment_status'  => 'pending',
-                'notes'           => $data['notes'] ?? null,
+                'reference'        => '',
+                'user_id'          => $request->user()->id,
+                'status'           => 'pending',
+                'subtotal'         => $subtotal,
+                'discount_id'      => $discountModel?->id,
+                'discount_amount'  => $discountAmount,
+                'shipping_cost'    => $shippingCost,
+                'tax'              => 0,
+                'total'            => $total,
+                'shipping_address' => $data['shipping_address'],
+                'payment_method'   => $data['payment_method'],
+                'payment_status'   => 'pending',
+                'notes'            => $data['notes'] ?? null,
             ]);
 
             // Set reference DSK-XXXXX
             $order->update(['reference' => Order::generateReference($order->id)]);
 
             // Create order items + deduct stock
-            foreach ($cart->items as $item) {
+            foreach ($data['items'] as $item) {
                 OrderItem::create([
                     'order_id'     => $order->id,
-                    'product_id'   => $item->product_id,
-                    'variant_id'   => $item->variant_id,
-                    'product_name' => $item->product->name,
-                    'variant_info' => $item->variant
-                        ? "{$item->variant->color} / {$item->variant->material}"
-                        : null,
-                    'quantity'     => $item->quantity,
-                    'unit_price'   => $item->product->price,
-                    'total'        => $item->product->price * $item->quantity,
+                    'product_id'   => $item['product_id'],
+                    'variant_id'   => null,
+                    'product_name' => $item['product_name'],
+                    'variant_info' => null,
+                    'quantity'     => $item['quantity'],
+                    'unit_price'   => $item['unit_price'],
+                    'total'        => $item['unit_price'] * $item['quantity'],
                 ]);
 
-                $item->product->decrement('stock', $item->quantity);
+                \App\Models\Product::find($item['product_id'])->decrement('stock', $item['quantity']);
             }
 
-            // Shipping address
+            // Also save to shipping_addresses table for backwards compat
+            $nameParts = explode(' ', $data['shipping_address']['full_name'], 2);
             ShippingAddress::create([
-                'order_id' => $order->id,
-                ...$data['shipping'],
+                'order_id'      => $order->id,
+                'first_name'    => $nameParts[0],
+                'last_name'     => $nameParts[1] ?? '',
+                'email'         => $request->user()->email,
+                'phone'         => $data['shipping_address']['phone'],
+                'address_line1' => $data['shipping_address']['address_line1'],
+                'address_line2' => null,
+                'city'          => $data['shipping_address']['city'],
+                'state'         => $data['shipping_address']['region'] ?? null,
+                'country'       => 'Morocco',
+                'postal_code'   => $data['shipping_address']['postal_code'] ?? null,
             ]);
 
             // Status history
@@ -172,16 +162,18 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Clear cart
-            $cart->items()->delete();
+            // Clear server-side cart if it exists
+            $cart = Cart::where('user_id', $request->user()->id)->first();
+            if ($cart) {
+                $cart->items()->delete();
+            }
+
+            return $order;
         });
 
-        $placed = Order::with(['items', 'shippingAddress'])
-            ->where('user_id', $request->user()->id)
-            ->latest()
-            ->first();
+        $order->load(['items', 'shippingAddress']);
 
-        return new OrderResource($placed);
+        return new OrderResource($order);
     }
 
     // PATCH /api/admin/orders/{id}/status  — admin only

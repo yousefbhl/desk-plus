@@ -15,52 +15,74 @@ export default function Checkout() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [address, setAddress] = useState('')
+  const [addressLine1, setAddressLine1] = useState('')
   const [city, setCity] = useState('')
+  const [region, setRegion] = useState('')
   const [postalCode, setPostalCode] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'bank_transfer'>('cash')
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const { isAuth } = useAuthStore()
+  const [submitting, setSubmitting] = useState(false)
+  const { isAuth, user } = useAuthStore()
 
   if (!isAuth) return <Navigate to="/login" replace />
 
   const validate = () => {
     const errs: Record<string, string> = {}
-    if (!firstName.trim()) errs.firstName = 'First name is required'
-    if (!lastName.trim()) errs.lastName = 'Last name is required'
+    if (!firstName.trim() || firstName.trim().length < 2) errs.firstName = 'First name is required (min 2 chars)'
+    if (!lastName.trim() || lastName.trim().length < 2) errs.lastName = 'Last name is required (min 2 chars)'
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) errs.email = 'Valid email is required'
     if (!phone.trim() || !/^[0-9+\s\-]{8,15}$/.test(phone)) errs.phone = 'Invalid phone number'
-    if (!address.trim()) errs.address = 'Address is required'
-    if (!city.trim()) errs.city = 'City is required'
-    if (!postalCode.trim()) errs.postalCode = 'Postal code is required'
+    if (!addressLine1.trim() || addressLine1.trim().length < 5) errs.addressLine1 = 'Address is required (min 5 chars)'
+    if (!city.trim() || city.trim().length < 2) errs.city = 'City is required'
+    if (!postalCode.trim() || postalCode.trim().length < 4) errs.postalCode = 'Postal code is required (min 4 chars)'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
   const subtotal = total()
-  const tax = Math.round(subtotal * 0.2)
-  const grandTotal = subtotal + tax
+  const shippingCost = subtotal >= 5000 ? 0 : 50
+  const grandTotal = subtotal + shippingCost
   const count = itemCount()
 
   const handleSubmit = async () => {
     if (!validate()) return
+    if (items.length === 0) {
+      showToast('Cart is empty', 'error')
+      return
+    }
+
+    setSubmitting(true)
     try {
+      const orderItems = items.map((item) => ({
+        product_id: item.productId,
+        product_name: item.name,
+        quantity: item.quantity,
+        unit_price: item.price,
+      }))
+
       const order = await placeOrder.mutateAsync({
+        items: orderItems,
         shipping_address: {
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          phone,
-          address,
-          city,
-          postal_code: postalCode,
+          full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+          address_line1: addressLine1.trim(),
+          city: city.trim(),
+          region: region.trim() || undefined,
+          postal_code: postalCode.trim() || undefined,
+          phone: phone.trim(),
         },
-        payment_method: 'cod',
+        payment_method: paymentMethod,
+        subtotal,
+        total: grandTotal,
       })
+
       clear()
-      showToast('Order placed!')
+      showToast('Order placed successfully!')
       navigate('/orders/' + order.id)
-    } catch {
-      showToast('Failed to place order', 'error')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to place order'
+      showToast(msg, 'error')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -89,6 +111,15 @@ export default function Checkout() {
           </div>
         </div>
 
+        {count === 0 && (
+          <div className="text-center py-12">
+            <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 48 }}>shopping_cart</span>
+            <p className="mt-4 text-on-surface-variant">Your cart is empty.</p>
+            <button onClick={() => navigate('/products')} className="mt-4 btn-grad text-white font-bold px-6 py-3 rounded-xl text-sm uppercase tracking-widest-2">Browse Products</button>
+          </div>
+        )}
+
+        {count > 0 && (
         <div className="grid grid-cols-12 gap-8">
           {/* LEFT */}
           <div className="col-span-7">
@@ -103,38 +134,46 @@ export default function Checkout() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold tracking-widest-2 uppercase">First name</label>
-                  <input className="field mt-2" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  <input className="field mt-2" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Ahmed" />
                   {errors.firstName && <p className="text-xs text-primary mt-1">{errors.firstName}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-bold tracking-widest-2 uppercase">Last name</label>
-                  <input className="field mt-2" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                  <input className="field mt-2" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="e.g. Benali" />
                   {errors.lastName && <p className="text-xs text-primary mt-1">{errors.lastName}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-bold tracking-widest-2 uppercase">Email</label>
-                  <input className="field mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <input className="field mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
                   {errors.email && <p className="text-xs text-primary mt-1">{errors.email}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-bold tracking-widest-2 uppercase">Phone</label>
-                  <input className="field mt-2" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  <input className="field mt-2" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+212 6 12 34 56 78" />
                   {errors.phone && <p className="text-xs text-primary mt-1">{errors.phone}</p>}
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-bold tracking-widest-2 uppercase">Address</label>
-                  <input className="field mt-2" value={address} onChange={(e) => setAddress(e.target.value)} />
-                  {errors.address && <p className="text-xs text-primary mt-1">{errors.address}</p>}
+                  <input className="field mt-2" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} placeholder="Street address, apartment, suite..." />
+                  {errors.addressLine1 && <p className="text-xs text-primary mt-1">{errors.addressLine1}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-bold tracking-widest-2 uppercase">City</label>
-                  <input className="field mt-2" value={city} onChange={(e) => setCity(e.target.value)} />
+                  <input className="field mt-2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Casablanca" />
                   {errors.city && <p className="text-xs text-primary mt-1">{errors.city}</p>}
                 </div>
                 <div>
+                  <label className="text-xs font-bold tracking-widest-2 uppercase">Region <span className="text-on-surface-variant font-normal">(optional)</span></label>
+                  <input className="field mt-2" value={region} onChange={(e) => setRegion(e.target.value)} placeholder="e.g. Grand Casablanca" />
+                </div>
+                <div>
                   <label className="text-xs font-bold tracking-widest-2 uppercase">Postal code</label>
-                  <input className="field mt-2" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+                  <input className="field mt-2" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="e.g. 20000" />
                   {errors.postalCode && <p className="text-xs text-primary mt-1">{errors.postalCode}</p>}
+                </div>
+                <div>
+                  <label className="text-xs font-bold tracking-widest-2 uppercase">Country</label>
+                  <input className="field mt-2" value="Morocco" disabled />
                 </div>
               </div>
             </div>
@@ -143,23 +182,26 @@ export default function Checkout() {
             <div className="bg-surface-container-lowest rounded-xl p-7 shadow-ambient">
               <div className="text-xs font-bold tracking-widest-2 uppercase mb-5">Payment Method</div>
               <div className="flex gap-8 border-b border-outline-variant text-sm font-semibold mb-7">
-                <button className="pb-3 text-on-surface-variant">Card</button>
-                <button className="pb-3 red-underline font-bold">Cash on Delivery</button>
-                <button className="pb-3 text-on-surface-variant">Bank Transfer</button>
+                <button onClick={() => setPaymentMethod('card')} className={`pb-3 ${paymentMethod === 'card' ? 'red-underline font-bold' : 'text-on-surface-variant'}`}>Card</button>
+                <button onClick={() => setPaymentMethod('cash')} className={`pb-3 ${paymentMethod === 'cash' ? 'red-underline font-bold' : 'text-on-surface-variant'}`}>Cash on Delivery</button>
+                <button onClick={() => setPaymentMethod('bank_transfer')} className={`pb-3 ${paymentMethod === 'bank_transfer' ? 'red-underline font-bold' : 'text-on-surface-variant'}`}>Bank Transfer</button>
               </div>
 
               <div className="text-sm text-on-surface-variant">
-                Pay with cash when your order is delivered.
+                {paymentMethod === 'cash' && 'Pay with cash when your order is delivered.'}
+                {paymentMethod === 'card' && 'Secure card payment (processed on delivery confirmation).'}
+                {paymentMethod === 'bank_transfer' && 'Transfer to our bank account. Order ships after payment confirmation.'}
               </div>
 
               <div className="mt-8 flex items-center justify-between">
-                <a className="text-sm font-semibold text-on-surface-variant">← Back to Delivery</a>
+                <button onClick={() => navigate('/cart')} className="text-sm font-semibold text-on-surface-variant">← Back to Cart</button>
                 <button
                   onClick={handleSubmit}
-                  disabled={placeOrder.isPending}
-                  className="btn-grad text-white font-bold px-8 py-4 rounded-xl uppercase tracking-widest-2 text-sm"
+                  disabled={submitting || placeOrder.isPending}
+                  className="btn-grad text-white font-bold px-8 py-4 rounded-xl uppercase tracking-widest-2 text-sm disabled:opacity-50 flex items-center gap-2"
                 >
-                  {placeOrder.isPending ? 'Placing order...' : 'Place Order'}
+                  {(submitting || placeOrder.isPending) && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  {(submitting || placeOrder.isPending) ? 'Placing order...' : 'Place Order'}
                 </button>
               </div>
             </div>
@@ -168,7 +210,7 @@ export default function Checkout() {
           {/* RIGHT summary */}
           <aside className="col-span-5">
             <div className="sticky top-24 bg-surface-container-lowest rounded-xl p-6 shadow-ambient">
-              <div className="text-xs font-bold tracking-widest-2 uppercase mb-4">Your Order</div>
+              <div className="text-xs font-bold tracking-widest-2 uppercase mb-4">Your Order ({count} item{count !== 1 ? 's' : ''})</div>
               <div className="space-y-3 mb-5">
                 {items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3">
@@ -182,16 +224,11 @@ export default function Checkout() {
                 ))}
               </div>
 
-              <div className="flex gap-2 mb-5">
-                <input className="field flex-1 !h-10 text-sm" placeholder="Promo code" />
-                <button className="px-4 rounded-xl bg-surface-container-high font-bold text-sm">Apply</button>
-              </div>
-
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-on-surface-variant">Subtotal</span><span className="font-semibold">{subtotal.toLocaleString()} MAD</span></div>
-                <div className="flex justify-between"><span className="text-on-surface-variant">Shipping</span><span className="font-semibold text-emerald-700">Free</span></div>
-                <div className="flex justify-between"><span className="text-on-surface-variant">Tax (20%)</span><span className="font-semibold">{tax.toLocaleString()} MAD</span></div>
+                <div className="flex justify-between"><span className="text-on-surface-variant">Shipping</span><span className={`font-semibold ${shippingCost === 0 ? 'text-emerald-700' : ''}`}>{shippingCost === 0 ? 'Free' : `${shippingCost} MAD`}</span></div>
               </div>
+              {shippingCost > 0 && <div className="text-xs text-on-surface-variant mt-1">Free shipping on orders over 5,000 MAD</div>}
               <div className="my-4 h-px bg-outline-variant"></div>
               <div className="flex justify-between items-end mb-5">
                 <span className="font-bold">Total</span>
@@ -206,13 +243,12 @@ export default function Checkout() {
             </div>
           </aside>
         </div>
+        )}
       </section>
 
       <style>{`
 .step-line{height:2px;background:#e5bdb8;position:relative;flex:1;border-radius:2px;}
 .step-line.done{background:#ba0a0d;}
-.cc-front{background:linear-gradient(135deg,#1c1b1b,#3a3636);}
-.cc-shine{background:linear-gradient(135deg,rgba(255,255,255,.15),transparent 60%);}
       `}</style>
     </>
   )

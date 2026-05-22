@@ -99,6 +99,6 @@ class OrderSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('✅ OrderSeeder: 4 orders created for customer@desk.plus');
+        $this->command->info('2 OrderSeeder: 4 orders created for customer@desk.plus');
     }
 }

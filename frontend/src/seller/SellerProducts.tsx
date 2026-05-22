@@ -1,7 +1,13 @@
+import { useState, useRef } from 'react'
 import { useSellerProducts } from '../hooks/useSeller'
+import { useUiStore } from '../store/uiStore'
 
 export default function SellerProducts() {
   const { data, isLoading } = useSellerProducts()
+  const { showToast } = useUiStore()
+  const [search, setSearch] = useState('')
+  const [activeTab, setActiveTab] = useState('active')
+  const bulkInputRef = useRef<HTMLInputElement>(null)
 
   if (isLoading) {
     return (
@@ -19,21 +25,22 @@ export default function SellerProducts() {
           <p className="text-sm text-on-surface-variant">42 active · 3 drafts · 1 archived</p>
         </div>
         <div className="flex gap-2">
-          <button className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>file_upload</span>Bulk upload</button>
-          <button className="btn-grad text-white font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest-2 flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>New piece</button>
+          <input ref={bulkInputRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e) => { if (e.target.files?.[0]) showToast(`File "${e.target.files[0].name}" selected — bulk upload coming soon`, 'info'); e.target.value = '' }} />
+          <button onClick={() => bulkInputRef.current?.click()} className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>file_upload</span>Bulk upload</button>
+          <button onClick={() => showToast('New piece form coming soon', 'info')} className="btn-grad text-white font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest-2 flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>New piece</button>
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="bg-white rounded-xl shadow-soft mb-6">
         <div className="flex items-center gap-1 px-5 pt-4 border-b border-outline-variant">
-          <button className="px-4 py-3 text-sm font-bold border-b-2 border-primary text-primary">Active <span className="text-xs text-on-surface-variant">42</span></button>
-          <button className="px-4 py-3 text-sm font-semibold text-on-surface-variant">Drafts <span className="text-xs">3</span></button>
-          <button className="px-4 py-3 text-sm font-semibold text-on-surface-variant">Low stock <span className="chip bg-amber-100 text-amber-700">2</span></button>
-          <button className="px-4 py-3 text-sm font-semibold text-on-surface-variant">Archived <span className="text-xs">1</span></button>
+          <button onClick={() => setActiveTab('active')} className={`px-4 py-3 text-sm ${activeTab === 'active' ? 'font-bold border-b-2 border-primary text-primary' : 'font-semibold text-on-surface-variant'}`}>Active <span className="text-xs text-on-surface-variant">42</span></button>
+          <button onClick={() => setActiveTab('drafts')} className={`px-4 py-3 text-sm ${activeTab === 'drafts' ? 'font-bold border-b-2 border-primary text-primary' : 'font-semibold text-on-surface-variant'}`}>Drafts <span className="text-xs">3</span></button>
+          <button onClick={() => setActiveTab('low_stock')} className={`px-4 py-3 text-sm ${activeTab === 'low_stock' ? 'font-bold border-b-2 border-primary text-primary' : 'font-semibold text-on-surface-variant'}`}>Low stock <span className="chip bg-amber-100 text-amber-700">2</span></button>
+          <button onClick={() => setActiveTab('archived')} className={`px-4 py-3 text-sm ${activeTab === 'archived' ? 'font-bold border-b-2 border-primary text-primary' : 'font-semibold text-on-surface-variant'}`}>Archived <span className="text-xs">1</span></button>
         </div>
         <div className="p-5 flex items-center gap-3">
-          <div className="relative flex-1 max-w-md"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span><input className="w-full pl-10 h-10 rounded-lg bg-surface-container-low border border-outline-variant text-sm" placeholder="Search my pieces…" /></div>
+          <div className="relative flex-1 max-w-md"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span><input className="w-full pl-10 h-10 rounded-lg bg-surface-container-low border border-outline-variant text-sm" placeholder="Search my pieces…" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
           <button className="chip border border-outline-variant bg-white">Category <span className="material-symbols-outlined" style={{ fontSize: 14 }}>expand_more</span></button>
           <div className="ml-auto flex bg-surface-container-high rounded-lg p-1">
             <button className="px-2.5 py-1 rounded-md bg-surface-container-lowest shadow-soft"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>grid_view</span></button>
@@ -49,8 +56,8 @@ export default function SellerProducts() {
           <div className="aspect-[4/3] ph-walnut relative">
             <span className="absolute top-3 left-3 chip btn-grad uppercase tracking-widest-2">Top seller</span>
             <div className="absolute top-3 right-3 flex gap-1">
-              <button className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span></button>
-              <button className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>more_vert</span></button>
+              <button onClick={() => showToast('Edit product coming soon', 'info')} className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span></button>
+              <button onClick={() => showToast('More options coming soon', 'info')} className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>more_vert</span></button>
             </div>
           </div>
           <div className="p-5">
@@ -77,8 +84,8 @@ export default function SellerProducts() {
         <div className="bg-white rounded-xl overflow-hidden shadow-soft">
           <div className="aspect-[4/3] ph-wood relative">
             <div className="absolute top-3 right-3 flex gap-1">
-              <button className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span></button>
-              <button className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>more_vert</span></button>
+              <button onClick={() => showToast('Edit product coming soon', 'info')} className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span></button>
+              <button onClick={() => showToast('More options coming soon', 'info')} className="w-8 h-8 rounded-full bg-white/90 grid place-items-center"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>more_vert</span></button>
             </div>
           </div>
           <div className="p-5">
@@ -120,7 +127,7 @@ export default function SellerProducts() {
               <div className="bg-amber-50 rounded-lg p-2"><div className="text-amber-700 uppercase tracking-widest-2">Stock</div><div className="font-black text-sm text-amber-800">3 ⚠</div></div>
               <div className="bg-surface-container-low rounded-lg p-2"><div className="text-on-surface-variant uppercase tracking-widest-2">Sold</div><div className="font-black text-sm">18</div></div>
             </div>
-            <button className="mt-4 w-full btn-grad text-white font-bold py-2 rounded-lg text-xs uppercase tracking-widest-2">Restock now</button>
+            <button onClick={() => showToast('Restock form coming soon', 'info')} className="mt-4 w-full btn-grad text-white font-bold py-2 rounded-lg text-xs uppercase tracking-widest-2">Restock now</button>
           </div>
         </div>
 
@@ -170,7 +177,7 @@ export default function SellerProducts() {
             <div className="font-bold mt-0.5 text-on-surface-variant">Awaiting photography</div>
             <div className="text-xs text-on-surface-variant mt-3">Created 2 days ago · 60% complete</div>
             <div className="mt-2 h-2 bg-surface-container-high rounded-full"><div className="h-full w-3/5 btn-grad rounded-full"></div></div>
-            <button className="mt-4 w-full border border-outline-variant bg-white font-bold py-2 rounded-lg text-xs uppercase tracking-widest-2">Continue editing</button>
+            <button onClick={() => showToast('Draft editor coming soon', 'info')} className="mt-4 w-full border border-outline-variant bg-white font-bold py-2 rounded-lg text-xs uppercase tracking-widest-2">Continue editing</button>
           </div>
         </div>
       </div>

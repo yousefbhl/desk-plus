@@ -97,9 +97,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/users/{user}',                [AdminController::class, 'deleteUser']);
 
         // Products management
+        Route::get('/products',                       [AdminController::class, 'products']);
         Route::post('/products',                      [ProductController::class, 'store']);
         Route::put('/products/{product}',             [ProductController::class, 'update']);
         Route::delete('/products/{product}',          [ProductController::class, 'destroy']);
+
+        // Sellers management
+        Route::get('/sellers',                        [AdminController::class, 'sellers']);
 
         // Categories management
         Route::post('/categories',                    [CatalogController::class, 'storeCategory']);

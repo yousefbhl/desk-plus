@@ -1,7 +1,12 @@
+import { useState } from 'react'
 import { useSellerStats } from '../hooks/useSeller'
+import { useUiStore } from '../store/uiStore'
 
 export default function SellerStats() {
   const { data: stats, isLoading } = useSellerStats()
+  const { showToast } = useUiStore()
+  const [period, setPeriod] = useState('90d')
+  const [chartView, setChartView] = useState<'weekly' | 'daily'>('weekly')
 
   if (isLoading) {
     return (
@@ -16,8 +21,12 @@ export default function SellerStats() {
       <div className="flex items-center justify-between mb-6">
         <div><h1 className="h-display text-3xl">Statistics</h1><p className="text-sm text-on-surface-variant">Your atelier{"'"}s pulse — last 90 days</p></div>
         <div className="flex gap-2">
-          <button className="chip border border-outline-variant bg-white">Last 90 days <span className="material-symbols-outlined" style={{ fontSize: 14 }}>expand_more</span></button>
-          <button className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>file_download</span>Export</button>
+          <select className="chip border border-outline-variant bg-white cursor-pointer" value={period} onChange={(e) => setPeriod(e.target.value)}>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="12m">Last 12 months</option>
+          </select>
+          <button onClick={() => window.print()} className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>file_download</span>Export</button>
         </div>
       </div>
 
@@ -65,7 +74,7 @@ export default function SellerStats() {
       <div className="bg-white rounded-xl p-6 shadow-soft mb-6">
         <div className="flex items-center justify-between mb-4">
           <div><h2 className="h-display text-lg">Revenue vs platform average</h2><div className="text-xs text-on-surface-variant">How Atelier Bensaïd performs against the 28-atelier average</div></div>
-          <div className="flex gap-2"><button className="chip btn-grad uppercase tracking-widest-2">Weekly</button><button className="chip bg-surface-container-high">Daily</button></div>
+          <div className="flex gap-2"><button onClick={() => setChartView('weekly')} className={`chip ${chartView === 'weekly' ? 'btn-grad' : 'bg-surface-container-high'} uppercase tracking-widest-2`}>Weekly</button><button onClick={() => setChartView('daily')} className={`chip ${chartView === 'daily' ? 'btn-grad' : 'bg-surface-container-high'} uppercase tracking-widest-2`}>Daily</button></div>
         </div>
         <svg viewBox="0 0 900 280" className="w-full">
           <defs>
@@ -160,7 +169,7 @@ export default function SellerStats() {
             <div className="flex items-center gap-2"><span className="w-4">1★</span><div className="flex-1 h-1.5 bg-surface-container-low rounded-full overflow-hidden"><div className="h-full btn-grad" style={{ width: '0%' }}></div></div><span className="w-7 text-right">1</span></div>
           </div>
           <div className="mt-4 pt-4 border-t border-outline-variant text-xs text-on-surface-variant">218 reviews · 32 unanswered</div>
-          <button className="mt-2 w-full btn-grad text-white font-bold py-2 rounded-lg text-xs uppercase tracking-widest-2">Reply to 32 →</button>
+          <button onClick={() => showToast('Review replies coming soon', 'info')} className="mt-2 w-full btn-grad text-white font-bold py-2 rounded-lg text-xs uppercase tracking-widest-2">Reply to 32 →</button>
         </div>
       </div>
 

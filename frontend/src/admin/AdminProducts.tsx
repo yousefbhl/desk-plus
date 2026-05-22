@@ -1,8 +1,32 @@
+import { useState, useRef } from 'react'
 import { useAdminProducts } from '../hooks/useAdmin'
+import { useUiStore } from '../store/uiStore'
+
+function statusChip(product: any) {
+  if (!product.is_active) return <span className="chip bg-gray-200 text-gray-700">Inactive</span>
+  if (product.stock === 0) return <span className="chip bg-red-100 text-primary">Out</span>
+  if (product.stock <= 5) return <span className="chip bg-amber-100 text-amber-700">Low stock</span>
+  return <span className="chip bg-emerald-100 text-emerald-700">Active</span>
+}
 
 export default function AdminProducts() {
-  const { data, isLoading } = useAdminProducts()
-  const products = data?.data ?? []
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const csvInputRef = useRef<HTMLInputElement>(null)
+  const { showToast } = useUiStore()
+
+  const { data, isLoading } = useAdminProducts({ search: search || undefined, status: statusFilter || undefined, page, per_page: 20 })
+  const products: any[] = data?.data ?? []
+  const meta = (data as any)?.meta ?? data
+  const total = meta?.total ?? products.length
+  const lastPage = meta?.last_page ?? 1
+  const currentPage = meta?.current_page ?? page
+
+  const activeCount = products.filter((p: any) => p.is_active && p.stock > 0).length
+  const lowStockCount = products.filter((p: any) => p.stock > 0 && p.stock <= 5).length
+  const outCount = products.filter((p: any) => p.stock === 0).length
 
   if (isLoading) {
     return (
@@ -17,44 +41,41 @@ export default function AdminProducts() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="h-display text-3xl">Products</h1>
-          <p className="text-sm text-on-surface-variant">142 active · 14 drafts · 6 archived</p>
+          <p className="text-sm text-on-surface-variant">{total} product{total !== 1 ? 's' : ''} found</p>
         </div>
         <div className="flex gap-2">
-          <button className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>file_upload</span>Import CSV</button>
-          <button className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>file_download</span>Export</button>
-          <button className="btn-grad text-white font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest-2 flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>add</span>New product</button>
+          <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { if (e.target.files?.[0]) showToast(`CSV "${e.target.files[0].name}" selected — import not yet implemented`, 'info'); e.target.value = '' }} />
+          <button onClick={() => csvInputRef.current?.click()} className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>file_upload</span>Import CSV</button>
+          <button onClick={() => { showToast('Exporting products...', 'info'); window.open(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/admin/products?export=csv`, '_blank') }} className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>file_download</span>Export</button>
+          <button onClick={() => showToast('New product form coming soon', 'info')} className="btn-grad text-white font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest-2 flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>add</span>New product</button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-5 shadow-soft"><div className="text-xs uppercase tracking-widest-2 font-bold text-on-surface-variant">Total SKUs</div><div className="text-2xl font-black mt-1">162</div><div className="text-xs text-emerald-700 mt-1">+8 this week</div></div>
-        <div className="bg-white rounded-xl p-5 shadow-soft"><div className="text-xs uppercase tracking-widest-2 font-bold text-on-surface-variant">In stock</div><div className="text-2xl font-black mt-1">134</div><div className="text-xs text-on-surface-variant mt-1">83% availability</div></div>
-        <div className="bg-white rounded-xl p-5 shadow-soft border-l-4 border-amber-500"><div className="text-xs uppercase tracking-widest-2 font-bold text-amber-700">Low stock</div><div className="text-2xl font-black mt-1">12</div><div className="text-xs text-on-surface-variant mt-1">Reorder soon</div></div>
-        <div className="bg-white rounded-xl p-5 shadow-soft border-l-4 border-primary"><div className="text-xs uppercase tracking-widest-2 font-bold text-primary">Out of stock</div><div className="text-2xl font-black mt-1">16</div><div className="text-xs text-on-surface-variant mt-1">Hidden from store</div></div>
+        <div className="bg-white rounded-xl p-5 shadow-soft"><div className="text-xs uppercase tracking-widest-2 font-bold text-on-surface-variant">Total SKUs</div><div className="text-2xl font-black mt-1">{total}</div></div>
+        <div className="bg-white rounded-xl p-5 shadow-soft"><div className="text-xs uppercase tracking-widest-2 font-bold text-on-surface-variant">Active</div><div className="text-2xl font-black mt-1">{activeCount}</div></div>
+        <div className="bg-white rounded-xl p-5 shadow-soft border-l-4 border-amber-500"><div className="text-xs uppercase tracking-widest-2 font-bold text-amber-700">Low stock</div><div className="text-2xl font-black mt-1">{lowStockCount}</div><div className="text-xs text-on-surface-variant mt-1">Reorder soon</div></div>
+        <div className="bg-white rounded-xl p-5 shadow-soft border-l-4 border-primary"><div className="text-xs uppercase tracking-widest-2 font-bold text-primary">Out of stock</div><div className="text-2xl font-black mt-1">{outCount}</div><div className="text-xs text-on-surface-variant mt-1">Hidden from store</div></div>
       </div>
 
       {/* Filter tabs */}
       <div className="bg-white rounded-xl shadow-soft">
         <div className="px-6 pt-5 flex items-center gap-1 border-b border-outline-variant">
-          <button className="px-4 py-3 text-sm font-bold border-b-2 border-primary text-primary">All <span className="text-xs text-on-surface-variant">142</span></button>
-          <button className="px-4 py-3 text-sm font-semibold text-on-surface-variant">Active <span className="text-xs">122</span></button>
-          <button className="px-4 py-3 text-sm font-semibold text-on-surface-variant">Drafts <span className="text-xs">14</span></button>
-          <button className="px-4 py-3 text-sm font-semibold text-on-surface-variant">Low stock <span className="chip bg-amber-100 text-amber-700">12</span></button>
-          <button className="px-4 py-3 text-sm font-semibold text-on-surface-variant">Archived <span className="text-xs">6</span></button>
+          <button onClick={() => { setStatusFilter(''); setPage(1) }} className={`px-4 py-3 text-sm font-bold ${!statusFilter ? 'border-b-2 border-primary text-primary' : 'text-on-surface-variant'}`}>All <span className="text-xs text-on-surface-variant">{total}</span></button>
+          <button onClick={() => { setStatusFilter('active'); setPage(1) }} className={`px-4 py-3 text-sm font-semibold ${statusFilter === 'active' ? 'border-b-2 border-primary text-primary' : 'text-on-surface-variant'}`}>Active</button>
+          <button onClick={() => { setStatusFilter('low_stock'); setPage(1) }} className={`px-4 py-3 text-sm font-semibold ${statusFilter === 'low_stock' ? 'border-b-2 border-primary text-primary' : 'text-on-surface-variant'}`}>Low stock</button>
+          <button onClick={() => { setStatusFilter('out_of_stock'); setPage(1) }} className={`px-4 py-3 text-sm font-semibold ${statusFilter === 'out_of_stock' ? 'border-b-2 border-primary text-primary' : 'text-on-surface-variant'}`}>Out of stock</button>
         </div>
         <div className="p-5 flex items-center gap-3">
-          <div className="relative flex-1 max-w-md"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span><input className="w-full pl-10 h-10 rounded-lg bg-surface-container-low border border-outline-variant text-sm" placeholder="Search products, SKU..." /></div>
-          <button className="chip border border-outline-variant bg-white text-on-surface">Category: All <span className="material-symbols-outlined" style={{fontSize:14}}>expand_more</span></button>
-          <button className="chip border border-outline-variant bg-white text-on-surface">Style: All <span className="material-symbols-outlined" style={{fontSize:14}}>expand_more</span></button>
-          <button className="chip border border-outline-variant bg-white text-on-surface">Space: All <span className="material-symbols-outlined" style={{fontSize:14}}>expand_more</span></button>
+          <div className="relative flex-1 max-w-md"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span><input className="w-full pl-10 h-10 rounded-lg bg-surface-container-low border border-outline-variant text-sm" placeholder="Search products, SKU..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} /></div>
           <div className="ml-auto text-sm text-on-surface-variant">Sort: <strong className="text-on-surface">Last edited</strong></div>
         </div>
 
         <table className="w-full text-sm">
           <thead className="text-xs uppercase tracking-widest-2 text-on-surface-variant">
             <tr className="bg-surface-container-low border-y border-outline-variant">
-              <th className="text-left px-6 py-3 w-8"><span className="ck"></span></th>
+              <th className="text-left px-6 py-3 w-8"><span className={`ck${selectedIds.size === products.length && products.length > 0 ? ' on' : ''}`} onClick={() => { if (selectedIds.size === products.length) setSelectedIds(new Set()); else setSelectedIds(new Set(products.map((p: any) => p.id))) }} style={{cursor:'pointer'}}></span></th>
               <th className="text-left py-3">Product</th>
               <th className="text-left py-3">SKU</th>
               <th className="text-left py-3">Category</th>
@@ -65,38 +86,36 @@ export default function AdminProducts() {
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/60">
-            <tr><td className="px-6 py-3"><span className="ck on"><span className="material-symbols-outlined" style={{fontSize:14}}>check</span></span></td><td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg ph-walnut"></div><div><div className="font-semibold">Aileron Executive Oak</div><div className="text-xs text-on-surface-variant">Walnut · Statesman</div></div></div></td><td className="font-mono text-xs">DK-AIL-WL01</td><td>Desks</td><td className="text-right font-bold">4,900 MAD</td><td className="text-right">24</td><td><span className="chip bg-emerald-100 text-emerald-700">Active</span></td><td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td></tr>
-            <tr className="bg-surface-container-low/40"><td className="px-6 py-3"><span className="ck on"><span className="material-symbols-outlined" style={{fontSize:14}}>check</span></span></td><td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg ph-mesh-chair"></div><div><div className="font-semibold">ErgoFlex Pro Mesh</div><div className="text-xs text-on-surface-variant">Carbon · Kendo Studio</div></div></div></td><td className="font-mono text-xs">DK-ERF-BK02</td><td>Chairs</td><td className="text-right font-bold">3,490 MAD</td><td className="text-right text-amber-700 font-bold">3 <span className="text-xs">&#9888;</span></td><td><span className="chip bg-amber-100 text-amber-700">Low stock</span></td><td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td></tr>
-            <tr><td className="px-6 py-3"><span className="ck"></span></td><td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg ph-dark"></div><div><div className="font-semibold">Lumi Task Light</div><div className="text-xs text-on-surface-variant">Matte black · Hacker Lab</div></div></div></td><td className="font-mono text-xs">DK-LMI-BK01</td><td>Lighting</td><td className="text-right font-bold">1,290 MAD</td><td className="text-right">87</td><td><span className="chip bg-emerald-100 text-emerald-700">Active</span></td><td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td></tr>
-            <tr><td className="px-6 py-3"><span className="ck"></span></td><td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg ph-cream"></div><div><div className="font-semibold">Linen Task Plus</div><div className="text-xs text-on-surface-variant">Bone · Coco</div></div></div></td><td className="font-mono text-xs">DK-LIN-CR01</td><td>Chairs</td><td className="text-right font-bold">1,890 MAD</td><td className="text-right">42</td><td><span className="chip bg-emerald-100 text-emerald-700">Active</span></td><td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td></tr>
-            <tr><td className="px-6 py-3"><span className="ck"></span></td><td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg ph-warm"></div><div><div className="font-semibold">Brass Pivot Stool</div><div className="text-xs text-on-surface-variant">Aged brass · Atelier</div></div></div></td><td className="font-mono text-xs">DK-BPS-BR02</td><td>Seating</td><td className="text-right font-bold">1,290 MAD</td><td className="text-right">0</td><td><span className="chip bg-red-100 text-primary">Out</span></td><td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td></tr>
-            <tr><td className="px-6 py-3"><span className="ck"></span></td><td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg ph-wood"></div><div><div className="font-semibold">Cube Modular Shelf</div><div className="text-xs text-on-surface-variant">Oak · Economie</div></div></div></td><td className="font-mono text-xs">DK-CMS-OK04</td><td>Storage</td><td className="text-right font-bold">2,490 MAD</td><td className="text-right">18</td><td><span className="chip bg-emerald-100 text-emerald-700">Active</span></td><td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td></tr>
-            <tr><td className="px-6 py-3"><span className="ck"></span></td><td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg ph-charcoal"></div><div><div className="font-semibold">Aero Stealth Mesh</div><div className="text-xs text-on-surface-variant">Carbon · Hacker</div></div></div></td><td className="font-mono text-xs">DK-AER-BK01</td><td>Chairs</td><td className="text-right font-bold">2,890 MAD</td><td className="text-right">31</td><td><span className="chip bg-gray-200 text-gray-700">Draft</span></td><td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td></tr>
+            {products.map((product: any) => (
+              <tr key={product.id}>
+                <td className="px-6 py-3"><span className={`ck${selectedIds.has(product.id) ? ' on' : ''}`} onClick={() => { setSelectedIds(prev => { const next = new Set(prev); if (next.has(product.id)) next.delete(product.id); else next.add(product.id); return next }) }} style={{cursor:'pointer'}}></span></td>
+                <td><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-lg bg-surface-container-high overflow-hidden">{product.images?.[0]?.url ? <img src={product.images[0].url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full ph-walnut"></div>}</div><div><div className="font-semibold">{product.name}</div><div className="text-xs text-on-surface-variant">{product.seller?.name ?? 'Unknown seller'}</div></div></div></td>
+                <td className="font-mono text-xs">{product.sku ?? '—'}</td>
+                <td>{product.category?.name ?? '—'}</td>
+                <td className="text-right font-bold">{(product.price ?? 0).toLocaleString()} MAD</td>
+                <td className={`text-right ${product.stock <= 5 && product.stock > 0 ? 'text-amber-700 font-bold' : ''}`}>{product.stock}{product.stock <= 5 && product.stock > 0 ? <span className="text-xs"> &#9888;</span> : ''}</td>
+                <td>{statusChip(product)}</td>
+                <td className="px-6"><button><span className="material-symbols-outlined text-on-surface-variant">more_horiz</span></button></td>
+              </tr>
+            ))}
+            {products.length === 0 && (
+              <tr><td colSpan={8} className="px-6 py-8 text-center text-on-surface-variant">No products found</td></tr>
+            )}
           </tbody>
         </table>
 
         <div className="flex items-center justify-between px-6 py-4 border-t border-outline-variant text-sm">
-          <div className="text-on-surface-variant">Showing 1–7 of 142</div>
+          <div className="text-on-surface-variant">Showing page {currentPage} of {lastPage} ({total} total)</div>
           <div className="flex items-center gap-2">
-            <button className="w-8 h-8 grid place-items-center rounded-lg hover:bg-surface-container-low"><span className="material-symbols-outlined" style={{fontSize:18}}>chevron_left</span></button>
-            <button className="w-8 h-8 grid place-items-center rounded-lg btn-grad text-white font-bold">1</button>
-            <button className="w-8 h-8 grid place-items-center rounded-lg hover:bg-surface-container-low font-semibold">2</button>
-            <button className="w-8 h-8 grid place-items-center rounded-lg hover:bg-surface-container-low font-semibold">3</button>
-            <span className="text-on-surface-variant">...</span>
-            <button className="w-8 h-8 grid place-items-center rounded-lg hover:bg-surface-container-low font-semibold">21</button>
-            <button className="w-8 h-8 grid place-items-center rounded-lg hover:bg-surface-container-low"><span className="material-symbols-outlined" style={{fontSize:18}}>chevron_right</span></button>
+            <button disabled={currentPage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="w-8 h-8 grid place-items-center rounded-lg hover:bg-surface-container-low disabled:opacity-30"><span className="material-symbols-outlined" style={{fontSize:18}}>chevron_left</span></button>
+            {Array.from({ length: Math.min(lastPage, 5) }, (_, i) => i + 1).map(p => (
+              <button key={p} onClick={() => setPage(p)} className={`w-8 h-8 grid place-items-center rounded-lg font-semibold ${p === currentPage ? 'btn-grad text-white font-bold' : 'hover:bg-surface-container-low'}`}>{p}</button>
+            ))}
+            {lastPage > 5 && <span className="text-on-surface-variant">...</span>}
+            {lastPage > 5 && <button onClick={() => setPage(lastPage)} className={`w-8 h-8 grid place-items-center rounded-lg font-semibold ${lastPage === currentPage ? 'btn-grad text-white font-bold' : 'hover:bg-surface-container-low'}`}>{lastPage}</button>}
+            <button disabled={currentPage >= lastPage} onClick={() => setPage(p => Math.min(lastPage, p + 1))} className="w-8 h-8 grid place-items-center rounded-lg hover:bg-surface-container-low disabled:opacity-30"><span className="material-symbols-outlined" style={{fontSize:18}}>chevron_right</span></button>
           </div>
         </div>
-      </div>
-
-      {/* Bulk action bar */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#1c1b1b] text-white rounded-xl shadow-ambient px-5 py-3 flex items-center gap-4 text-sm">
-        <strong>2 selected</strong>
-        <button className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20">Edit price</button>
-        <button className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20">Tag</button>
-        <button className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20">Duplicate</button>
-        <button className="px-3 py-1.5 rounded-lg bg-primary text-white">Archive</button>
-        <button className="text-white/60 hover:text-white"><span className="material-symbols-outlined" style={{fontSize:18}}>close</span></button>
       </div>
     </>
   )

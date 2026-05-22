@@ -8,8 +8,8 @@ export default function Cart() {
   const navigate = useNavigate()
 
   const subtotal = total()
-  const tax = Math.round(subtotal * 0.2)
-  const grandTotal = subtotal + tax
+  const shippingCost = subtotal >= 5000 ? 0 : 50
+  const grandTotal = subtotal + shippingCost
   const count = itemCount()
 
   if (items.length === 0) {
@@ -106,8 +106,8 @@ export default function Cart() {
             <div className="text-xs font-bold tracking-widest-2 uppercase mb-4">Order Summary</div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-on-surface-variant">Subtotal ({count} items)</span><span className="font-semibold">{subtotal.toLocaleString()} MAD</span></div>
-              <div className="flex justify-between"><span className="text-on-surface-variant">Shipping</span><span className="font-semibold text-emerald-700">Free</span></div>
-              <div className="flex justify-between"><span className="text-on-surface-variant">Tax (20%)</span><span className="font-semibold">{tax.toLocaleString()} MAD</span></div>
+              <div className="flex justify-between"><span className="text-on-surface-variant">Shipping</span><span className={`font-semibold ${shippingCost === 0 ? 'text-emerald-700' : ''}`}>{shippingCost === 0 ? 'Free' : `${shippingCost} MAD`}</span></div>
+              {shippingCost > 0 && <div className="text-xs text-on-surface-variant">Free shipping on orders over 5,000 MAD</div>}
             </div>
             <div className="my-5 h-px bg-outline-variant"></div>
             <div className="flex justify-between items-end">

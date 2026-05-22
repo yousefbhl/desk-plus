@@ -1,6 +1,15 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+const QUIZ_QUESTIONS = [
+  { q: 'What best describes your work?', options: [{ label: 'Deep focus', desc: 'Writing, coding, analysis', bg: 'ph-dark' }, { label: 'Meetings & calls', desc: 'Client-facing, conferences', bg: 'ph-corp' }, { label: 'Creative making', desc: 'Design, art, prototyping', bg: 'ph-creative' }] },
+  { q: 'Which palette feels right?', options: [{ label: 'Earth & wood', desc: 'Warm browns, brass', bg: 'ph-walnut' }, { label: 'All white', desc: 'Cream, bone, fog', bg: '' }, { label: 'Black & accent', desc: 'Charcoal + signal red', bg: 'ph-dark' }] },
+  { q: 'Pick a vibe word.', options: [{ label: 'Minimal', desc: 'Less is more', bg: 'ph-charcoal' }, { label: 'Warm', desc: 'Inviting, cozy', bg: 'ph-warm' }, { label: 'Industrial', desc: 'Raw, honest', bg: 'ph-wood' }] },
+] as const
+
 export default function Styles() {
+  const [quizStep, setQuizStep] = useState(0)
+  const [quizAnswers, setQuizAnswers] = useState<number[]>([])
   return (
     <div>
       {/* Hero */}
@@ -127,26 +136,34 @@ export default function Styles() {
             <p className="text-on-surface-variant mt-2">Three quick questions. We'll match you to a taste.</p>
           </div>
           <div className="bg-surface-container-lowest rounded-xl p-8 shadow-ambient max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest-2 mb-2"><span className="text-primary">Question 2 of 3</span><span className="text-on-surface-variant">— Which palette feels right?</span></div>
-            <div className="h-1.5 bg-surface-container-high rounded-full overflow-hidden mb-8"><div className="h-full w-2/3 btn-grad"></div></div>
-            <div className="grid grid-cols-3 gap-4">
-              <button className="rounded-xl overflow-hidden group ring-2 ring-primary">
-                <div className="aspect-[4/3] ph-walnut"></div>
-                <div className="bg-surface-container-lowest p-3 text-left"><div className="font-bold text-sm">Earth & wood</div><div className="text-xs text-on-surface-variant">Warm browns, brass</div></div>
-              </button>
-              <button className="rounded-xl overflow-hidden group">
-                <div className="aspect-[4/3]" style={{background:'linear-gradient(135deg,#fff,#e5e2e1)'}}></div>
-                <div className="bg-surface-container-lowest p-3 text-left"><div className="font-bold text-sm">All white</div><div className="text-xs text-on-surface-variant">Cream, bone, fog</div></div>
-              </button>
-              <button className="rounded-xl overflow-hidden group">
-                <div className="aspect-[4/3] ph-dark"></div>
-                <div className="bg-surface-container-lowest p-3 text-left"><div className="font-bold text-sm">Black & accent</div><div className="text-xs text-on-surface-variant">Charcoal + signal red</div></div>
-              </button>
-            </div>
-            <div className="mt-6 flex justify-between">
-              <button className="text-sm font-semibold text-on-surface-variant">← Back</button>
-              <button className="btn-grad text-white font-bold px-6 py-3 rounded-xl uppercase tracking-widest-2 text-sm">Next →</button>
-            </div>
+            {quizStep < QUIZ_QUESTIONS.length ? (
+              <>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest-2 mb-2"><span className="text-primary">Question {quizStep + 1} of {QUIZ_QUESTIONS.length}</span><span className="text-on-surface-variant">— {QUIZ_QUESTIONS[quizStep].q}</span></div>
+                <div className="h-1.5 bg-surface-container-high rounded-full overflow-hidden mb-8"><div className="h-full btn-grad" style={{ width: `${((quizStep + 1) / QUIZ_QUESTIONS.length) * 100}%` }}></div></div>
+                <div className="grid grid-cols-3 gap-4">
+                  {QUIZ_QUESTIONS[quizStep].options.map((opt, i) => (
+                    <button key={i} onClick={() => setQuizAnswers(prev => { const next = [...prev]; next[quizStep] = i; return next })} className={`rounded-xl overflow-hidden group ${quizAnswers[quizStep] === i ? 'ring-2 ring-primary' : ''}`}>
+                      <div className={`aspect-[4/3] ${opt.bg}`} style={!opt.bg ? { background: 'linear-gradient(135deg,#fff,#e5e2e1)' } : undefined}></div>
+                      <div className="bg-surface-container-lowest p-3 text-left"><div className="font-bold text-sm">{opt.label}</div><div className="text-xs text-on-surface-variant">{opt.desc}</div></div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-6 flex justify-between">
+                  <button onClick={() => setQuizStep(s => Math.max(0, s - 1))} className={`text-sm font-semibold text-on-surface-variant ${quizStep === 0 ? 'opacity-40' : ''}`}>← Back</button>
+                  <button onClick={() => { if (quizAnswers[quizStep] != null) setQuizStep(s => s + 1) }} className={`btn-grad text-white font-bold px-6 py-3 rounded-xl uppercase tracking-widest-2 text-sm ${quizAnswers[quizStep] == null ? 'opacity-50' : ''}`}>{quizStep === QUIZ_QUESTIONS.length - 1 ? 'See result' : 'Next →'}</button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <span className="material-symbols-outlined text-primary" style={{ fontSize: 48 }}>auto_awesome</span>
+                <h3 className="h-display text-2xl mt-3">Your match: <span className="text-primary">{['Kendo', 'Coco', 'Woody'][quizAnswers[0] ?? 0]}</span></h3>
+                <p className="text-on-surface-variant mt-2">Based on your answers, this style matches your workspace philosophy.</p>
+                <div className="mt-5 flex justify-center gap-3">
+                  <Link to={`/products?taste=${['kendo', 'coco', 'woody'][quizAnswers[0] ?? 0]}`} className="btn-grad text-white font-bold px-6 py-3 rounded-xl uppercase tracking-widest-2 text-sm">Shop this style</Link>
+                  <button onClick={() => { setQuizStep(0); setQuizAnswers([]) }} className="border border-outline-variant font-semibold px-5 py-3 rounded-xl text-sm">Retake quiz</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
