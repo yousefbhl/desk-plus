@@ -44,6 +44,7 @@ export default function AdminProducts() {
           <p className="text-sm text-on-surface-variant">{total} product{total !== 1 ? 's' : ''} found</p>
         </div>
         <div className="flex gap-2">
+          <a href="https://desk-cloud-nine.vercel.app/dashboard.html" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 rounded-xl border border-outline-variant text-on-surface-variant hover:bg-surface-container text-sm font-semibold transition-colors"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>open_in_new</span>Desk+ Cloud</a>
           <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { if (e.target.files?.[0]) showToast(`CSV "${e.target.files[0].name}" selected — import not yet implemented`, 'info'); e.target.value = '' }} />
           <button onClick={() => csvInputRef.current?.click()} className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>file_upload</span>Import CSV</button>
           <button onClick={() => { showToast('Exporting products...', 'info'); window.open(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/admin/products?export=csv`, '_blank') }} className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{fontSize:18}}>file_download</span>Export</button>
@@ -57,6 +58,13 @@ export default function AdminProducts() {
         <div className="bg-white rounded-xl p-5 shadow-soft"><div className="text-xs uppercase tracking-widest-2 font-bold text-on-surface-variant">Active</div><div className="text-2xl font-black mt-1">{activeCount}</div></div>
         <div className="bg-white rounded-xl p-5 shadow-soft border-l-4 border-amber-500"><div className="text-xs uppercase tracking-widest-2 font-bold text-amber-700">Low stock</div><div className="text-2xl font-black mt-1">{lowStockCount}</div><div className="text-xs text-on-surface-variant mt-1">Reorder soon</div></div>
         <div className="bg-white rounded-xl p-5 shadow-soft border-l-4 border-primary"><div className="text-xs uppercase tracking-widest-2 font-bold text-primary">Out of stock</div><div className="text-2xl font-black mt-1">{outCount}</div><div className="text-xs text-on-surface-variant mt-1">Hidden from store</div></div>
+      </div>
+
+      {/* Cloud banner */}
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-fixed border border-outline-variant mb-4 text-sm">
+        <span className="material-symbols-outlined text-primary" style={{ fontSize: 18 }}>cloud_sync</span>
+        <span className="text-on-surface-variant">Need to add products in bulk?</span>
+        <a href="https://desk-cloud-nine.vercel.app/dashboard.html" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline ml-auto flex items-center gap-1">Open Desk+ Cloud<span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span></a>
       </div>
 
       {/* Filter tabs */}

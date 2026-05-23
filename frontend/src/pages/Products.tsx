@@ -120,10 +120,36 @@ export default function Products() {
 
               <div className="mb-6">
                 <div className="text-sm font-bold mb-3 flex items-center justify-between">Price range <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 18 }}>expand_less</span></div>
-                <div className="slider-track mb-3"><div className="fill" style={{ left: `${(minPrice / 50000) * 100}%`, right: `${100 - (maxPrice / 50000) * 100}%` }}></div><div className="h" style={{ left: `${(minPrice / 50000) * 100}%` }}></div><div className="h" style={{ right: `${100 - (maxPrice / 50000) * 100}%` }}></div></div>
-                <div className="relative h-1 mb-1">
-                  <input type="range" min={0} max={50000} step={100} value={minPrice} onChange={(e) => { const v = Number(e.target.value); if (v < maxPrice) { setMinPrice(v); setPage(1) } }} className="absolute inset-0 w-full opacity-0 cursor-pointer" style={{ zIndex: 2 }} />
-                  <input type="range" min={0} max={50000} step={100} value={maxPrice} onChange={(e) => { const v = Number(e.target.value); if (v > minPrice) { setMaxPrice(v); setPage(1) } }} className="absolute inset-0 w-full opacity-0 cursor-pointer" style={{ zIndex: 3 }} />
+                <div className="price-slider-wrapper">
+                  <div className="price-slider-track" />
+                  <div
+                    className="price-slider-range"
+                    style={{ left: `${(minPrice / 50000) * 100}%`, width: `${((maxPrice - minPrice) / 50000) * 100}%` }}
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={50000}
+                    step={100}
+                    value={minPrice}
+                    onChange={(e) => {
+                      const val = Math.min(Number(e.target.value), maxPrice - 500)
+                      setMinPrice(val)
+                      setPage(1)
+                    }}
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={50000}
+                    step={100}
+                    value={maxPrice}
+                    onChange={(e) => {
+                      const val = Math.max(Number(e.target.value), minPrice + 500)
+                      setMaxPrice(val)
+                      setPage(1)
+                    }}
+                  />
                 </div>
                 <div className="flex justify-between gap-2">
                   <div className="flex-1 bg-surface-container-low rounded-lg p-2 text-xs"><div className="text-on-surface-variant">Min</div><div className="font-bold">{minPrice.toLocaleString()} MAD</div></div>
@@ -373,11 +399,6 @@ export default function Products() {
         </div>
       </section>
 
-      <style>{`
-        .slider-track{height:6px;background:#e5bdb8;border-radius:3px;position:relative;}
-        .slider-track .fill{position:absolute;left:14%;right:24%;height:100%;background:#ba0a0d;border-radius:3px;}
-        .slider-track .h{position:absolute;width:18px;height:18px;border-radius:50%;background:#ba0a0d;top:-6px;box-shadow:0 0 0 4px #fff,0 4px 8px rgba(0,0,0,.1);}
-      `}</style>
     </div>
   )
 }

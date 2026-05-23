@@ -26,9 +26,17 @@ export default function SellerProducts() {
         </div>
         <div className="flex gap-2">
           <input ref={bulkInputRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e) => { if (e.target.files?.[0]) showToast(`File "${e.target.files[0].name}" selected — bulk upload coming soon`, 'info'); e.target.value = '' }} />
+          <a href="https://desk-cloud-nine.vercel.app/dashboard.html" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 rounded-xl border border-outline-variant text-on-surface-variant hover:bg-surface-container text-sm font-semibold transition-colors"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>open_in_new</span>Desk+ Cloud</a>
           <button onClick={() => bulkInputRef.current?.click()} className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>file_upload</span>Bulk upload</button>
           <button onClick={() => showToast('New piece form coming soon', 'info')} className="btn-grad text-white font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest-2 flex items-center gap-2"><span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>New piece</button>
         </div>
+      </div>
+
+      {/* Cloud banner */}
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-fixed border border-outline-variant mb-4 text-sm">
+        <span className="material-symbols-outlined text-primary" style={{ fontSize: 18 }}>cloud_sync</span>
+        <span className="text-on-surface-variant">Want to manage your catalog more comfortably?</span>
+        <a href="https://desk-cloud-nine.vercel.app/dashboard.html" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline ml-auto flex items-center gap-1">Open Desk+ Cloud<span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span></a>
       </div>
 
       {/* Toolbar */}

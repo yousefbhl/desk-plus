@@ -190,6 +190,61 @@
     100% { transform: translateX(0); }
   }
 
+  /* === Price range slider fix === */
+  .price-slider-wrapper {
+    position: relative;
+    height: 5px;
+    margin: 20px 0;
+  }
+  .price-slider-wrapper input[type="range"] {
+    position: absolute;
+    width: 100%;
+    height: 5px;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    top: 0;
+    left: 0;
+  }
+  .price-slider-wrapper input[type="range"]::-webkit-slider-thumb {
+    pointer-events: all;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: #ba0a0d;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #ba0a0d;
+  }
+  .price-slider-wrapper input[type="range"]::-moz-range-thumb {
+    pointer-events: all;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: #ba0a0d;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #ba0a0d;
+  }
+  .price-slider-track {
+    position: absolute;
+    height: 5px;
+    width: 100%;
+    background: #e5bdb8;
+    border-radius: 3px;
+    top: 0;
+  }
+  .price-slider-range {
+    position: absolute;
+    height: 5px;
+    background: #ba0a0d;
+    border-radius: 3px;
+    top: 0;
+  }
+
   /* ── Status badges ── */
   .badge-pending   { background: #fef3c7; color: #92400e; }
   .badge-preparing { background: #dbeafe; color: #1e40af; }
