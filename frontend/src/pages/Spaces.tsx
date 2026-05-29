@@ -5,12 +5,12 @@ import { useUiStore } from '../store/uiStore'
 const SPACE_CATEGORIES = ['All', 'Corporate', 'Education', 'Healthcare', 'Tech / Dev', 'Creative'] as const
 
 const SPACES = [
-  { name: 'DEV SPACE', category: 'Tech / Dev', bg: 'ph-dark', slug: 'dev-space', price: '12,000', desc: 'Optimized for focus and deep work sessions.', chips: ['Desk', 'Chair', 'Storage', 'Lighting'], layouts: ['▭ U-shape', '∟ L-shape', '+ Cross'] },
-  { name: 'ART SPACE', category: 'Creative', bg: 'ph-creative', slug: 'art-space', price: '9,500', desc: 'Vibrant, inspiring environments for creators.', chips: ['Desk', 'Stool', 'Easel', 'Lighting'], layouts: ['∟ L-shape', '▭ Linear'] },
-  { name: 'WOOD MODERN', category: 'Corporate', bg: 'ph-walnut', slug: 'wood-modern', price: '18,200', desc: 'The timeless elegance of organic materials.', chips: ['Desk', 'Chair', 'Credenza', 'Shelf'], layouts: ['▭ U-shape', '+ Cross'] },
-  { name: 'SCHOOL / UNIVERSITY', category: 'Education', bg: 'ph-edu', slug: 'school-university', price: '6,800', desc: 'High-density seating with acoustic dampening.', chips: ['Bench desk', 'Stack chair', 'Lockers'], layouts: ['▭ Linear', '▦ Cluster'] },
-  { name: 'DOCTOR SUITE', category: 'Healthcare', bg: 'ph-med', slug: 'doctor-suite', price: '11,400', desc: 'Antimicrobial surfaces, quiet flow.', chips: ['Console', 'Bench', 'Cabinet'], layouts: ['∟ L-shape', '▭ Linear'] },
-  { name: 'COMMERCE FLOOR', category: 'Corporate', bg: 'ph-corp', slug: 'commerce-floor', price: '15,900', desc: 'Retail-front, hot-desking compatible.', chips: ['Counter', 'Stool', 'POS'], layouts: ['▭ Island', '∟ L-shape'] },
+  { name: 'DEV SPACE', category: 'Tech / Dev', bg: 'ph-dark', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&q=85&auto=format&fit=crop', slug: 'dev-space', price: '12,000', desc: 'Optimized for focus and deep work sessions.', chips: ['Desk', 'Chair', 'Storage', 'Lighting'], layouts: ['▭ U-shape', '∟ L-shape', '+ Cross'] },
+  { name: 'ART SPACE', category: 'Creative', bg: 'ph-creative', image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1200&q=85&auto=format&fit=crop', slug: 'art-space', price: '9,500', desc: 'Vibrant, inspiring environments for creators.', chips: ['Desk', 'Stool', 'Easel', 'Lighting'], layouts: ['∟ L-shape', '▭ Linear'] },
+  { name: 'WOOD MODERN', category: 'Corporate', bg: 'ph-walnut', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=85&auto=format&fit=crop', slug: 'wood-modern', price: '18,200', desc: 'The timeless elegance of organic materials.', chips: ['Desk', 'Chair', 'Credenza', 'Shelf'], layouts: ['▭ U-shape', '+ Cross'] },
+  { name: 'SCHOOL / UNIVERSITY', category: 'Education', bg: 'ph-edu', image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&q=85&auto=format&fit=crop', slug: 'school-space', price: '6,800', desc: 'High-density seating with acoustic dampening.', chips: ['Bench desk', 'Stack chair', 'Lockers'], layouts: ['▭ Linear', '▦ Cluster'] },
+  { name: 'DOCTOR SUITE', category: 'Healthcare', bg: 'ph-med', image: 'https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?w=1200&q=85&auto=format&fit=crop', slug: 'doctor-space', price: '11,400', desc: 'Antimicrobial surfaces, quiet flow.', chips: ['Console', 'Bench', 'Cabinet'], layouts: ['∟ L-shape', '▭ Linear'] },
+  { name: 'COMMERCE FLOOR', category: 'Corporate', bg: 'ph-corp', image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1200&q=85&auto=format&fit=crop', slug: 'commerce-space', price: '15,900', desc: 'Retail-front, hot-desking compatible.', chips: ['Counter', 'Stool', 'POS'], layouts: ['▭ Island', '∟ L-shape'] },
 ] as const
 
 export default function Spaces() {
@@ -67,9 +67,10 @@ export default function Spaces() {
         <div className="grid grid-cols-3 gap-6">
           {filteredSpaces.map((space) => (
             <div key={space.slug} className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-ambient group">
-              <div className={`${space.bg} h-64 relative overflow-hidden`}>
-                <div className="absolute top-3 left-3 chip btn-grad uppercase tracking-widest-2">{space.category}</div>
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
+              <div className={`${space.bg} h-64 relative overflow-hidden bg-cover bg-center`} style={{ backgroundImage: `url('${space.image}')` }}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20"></div>
+                <div className="absolute top-3 left-3 z-[1] chip btn-grad uppercase tracking-widest-2">{space.category}</div>
+                  <div className="absolute bottom-3 left-3 right-3 z-[1] flex items-center justify-between text-white">
                   <div className="font-black text-xl tracking-tight">{space.name}</div>
                   <span className="material-symbols-outlined">arrow_outward</span>
                 </div>

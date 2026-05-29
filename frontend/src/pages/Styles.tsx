@@ -26,7 +26,8 @@ export default function Styles() {
       <section className="max-w-screen-2xl mx-auto px-8 pb-12">
         <div className="grid grid-cols-12 rounded-xl overflow-hidden shadow-ambient bg-surface-container-lowest">
           <div className="col-span-7 ph-charcoal relative min-h-[480px]">
-            <div className="absolute inset-0 bgimg ph-charcoal"></div>
+            <div className="absolute inset-0 bgimg ph-charcoal bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1400&q=85&auto=format&fit=crop')" }}></div>
+              <div className="absolute inset-0 bg-black/30"></div>
             {/* Asian-inspired motif */}
             <svg className="absolute inset-0 m-auto w-2/3 opacity-90" viewBox="0 0 200 200" fill="none">
               <circle cx="100" cy="100" r="78" stroke="#ba0a0d" strokeWidth="3"/>
@@ -59,7 +60,7 @@ export default function Styles() {
         <div className="grid grid-cols-3 gap-6">
           {/* Coco */}
           <Link to="/products?taste=coco" className="style-card relative rounded-xl overflow-hidden block group">
-            <div className="absolute inset-0 ph-cream bgimg"></div>
+            <div className="absolute inset-0 ph-cream bgimg bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=900&q=85&auto=format&fit=crop')" }}></div>
             <div className="absolute inset-0 overlay"></div>
             <div className="relative h-full p-6 flex flex-col justify-end text-white">
               <div className="italic text-white/80 text-xs uppercase tracking-widest-2">02 · Soft</div>
@@ -70,7 +71,7 @@ export default function Styles() {
           </Link>
           {/* Woody */}
           <Link to="/products?taste=woody" className="style-card relative rounded-xl overflow-hidden block group">
-            <div className="absolute inset-0 ph-walnut bgimg"></div>
+            <div className="absolute inset-0 ph-walnut bgimg bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=900&q=85&auto=format&fit=crop')" }}></div>
             <div className="absolute inset-0 overlay"></div>
             <div className="relative h-full p-6 flex flex-col justify-end text-white">
               <div className="italic text-white/80 text-xs uppercase tracking-widest-2">03 · Organic</div>
@@ -81,7 +82,7 @@ export default function Styles() {
           </Link>
           {/* White */}
           <Link to="/products?taste=white" className="style-card relative rounded-xl overflow-hidden block group">
-            <div className="absolute inset-0 bgimg" style={{background:'linear-gradient(135deg,#ffffff,#e5e2e1)'}}></div>
+            <div className="absolute inset-0 bgimg bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&q=85&auto=format&fit=crop')" }}></div>
             <div className="absolute inset-0 overlay" style={{background:'linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45))'}}></div>
             <div className="relative h-full p-6 flex flex-col justify-end text-white">
               <div className="italic text-white/80 text-xs uppercase tracking-widest-2">04 · Pure</div>
@@ -92,7 +93,7 @@ export default function Styles() {
           </Link>
           {/* Hacker */}
           <Link to="/products?taste=hacker" className="style-card relative rounded-xl overflow-hidden block group">
-            <div className="absolute inset-0 ph-dark bgimg"></div>
+            <div className="absolute inset-0 ph-dark bgimg bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1547082299-de196ea013d6?w=900&q=85&auto=format&fit=crop')" }}></div>
             <div className="absolute inset-0 overlay"></div>
             <div className="absolute top-4 right-4 chip btn-grad uppercase tracking-widest-2 z-10">New</div>
             <div className="relative h-full p-6 flex flex-col justify-end text-white">
@@ -104,7 +105,7 @@ export default function Styles() {
           </Link>
           {/* Economie */}
           <Link to="/products?taste=economie" className="style-card relative rounded-xl overflow-hidden block group">
-            <div className="absolute inset-0 ph-wood bgimg"></div>
+            <div className="absolute inset-0 ph-wood bgimg bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542330952-bffc55e812b2?w=900&q=85&auto=format&fit=crop')" }}></div>
             <div className="absolute inset-0 overlay"></div>
             <div className="relative h-full p-6 flex flex-col justify-end text-white">
               <div className="italic text-white/80 text-xs uppercase tracking-widest-2">06 · Honest</div>
@@ -115,7 +116,7 @@ export default function Styles() {
           </Link>
           {/* Atelier */}
           <Link to="/products?taste=atelier" className="style-card relative rounded-xl overflow-hidden block group">
-            <div className="absolute inset-0 ph-warm bgimg"></div>
+            <div className="absolute inset-0 ph-warm bgimg bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1601058268499-e52658b8bb88?w=900&q=85&auto=format&fit=crop')" }}></div>
             <div className="absolute inset-0 overlay"></div>
             <div className="relative h-full p-6 flex flex-col justify-end text-white">
               <div className="italic text-white/80 text-xs uppercase tracking-widest-2">07 · Artisan</div>
@@ -172,7 +173,7 @@ export default function Styles() {
       <section className="max-w-screen-2xl mx-auto px-8 py-16">
         <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant mb-3">Style drawer (preview)</div>
         <div className="bg-surface-container-lowest rounded-xl p-8 shadow-ambient grid grid-cols-12 gap-8 items-center">
-          <div className="col-span-4 ph-walnut aspect-square rounded-xl"></div>
+          <div className="col-span-4 ph-walnut aspect-square rounded-xl bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1594620302200-9a762244a156?w=900&q=85&auto=format&fit=crop')" }}></div>
           <div className="col-span-5">
             <div className="text-xs font-bold uppercase tracking-widest-2 text-primary">Woody</div>
             <h3 className="h-display text-4xl mt-2">Grain. Weight. Honesty.</h3>
