@@ -1,7 +1,7 @@
 // frontend/src/api/index.ts
 import api from './api';
 import type {
-  AuthResponse, Cart, CheckoutPayload, Discount,
+  AppSettings, AuthResponse, Cart, CheckoutPayload, Discount,
   PaginatedResponse, Product, ProductFilters, Order, User,
 } from '../types';
 
@@ -53,6 +53,10 @@ export const catalogApi = {
   tastes:     () => api.get('/tastes'),
 };
 
+export const settingsApi = {
+  get: () => api.get<AppSettings>('/settings'),
+};
+
 // ── Cart (server-side, used when authenticated) ─────────────
 export const cartApi = {
   get:          () => api.get<Cart>('/cart'),
@@ -91,6 +95,9 @@ export const ordersApi = {
 // ── Admin ────────────────────────────────────────────────────
 export const adminApi = {
   stats: () => api.get('/admin/stats'),
+  settings: () => api.get<AppSettings>('/admin/settings'),
+  updateSettings: (data: Partial<AppSettings>) =>
+    api.put<AppSettings>('/admin/settings', data),
 
   orders: (params?: object) =>
     api.get<PaginatedResponse<Order>>('/admin/orders', { params }),

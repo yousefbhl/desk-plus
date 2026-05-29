@@ -240,3 +240,20 @@ export interface Discount {
   starts_at?: string | null
   expires_at?: string | null
 }
+
+export interface AppSettings {
+  brand_name: string
+  primary_color: string
+  secondary_surface: string
+  facebook_url?: string | null
+  instagram_name?: string | null
+  instagram_url?: string | null
+  tiktok_url?: string | null
+  support_email: string
+  sales_email: string
+  phone: string
+  dark_luxury_theme: boolean
+  promo_banner: boolean
+  customer_reviews: boolean
+  guest_checkout: boolean
+}

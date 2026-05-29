@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\UserResource;
+use App\Models\AppSetting;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -15,6 +16,35 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
+    // GET /api/settings and GET /api/admin/settings
+    public function settings()
+    {
+        return response()->json(AppSetting::allSettings());
+    }
+
+    // PUT /api/admin/settings
+    public function updateSettings(Request $request)
+    {
+        $settings = $request->validate([
+            'brand_name' => 'sometimes|required|string|max:80',
+            'primary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'secondary_surface' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'facebook_url' => 'sometimes|nullable|url|max:255',
+            'instagram_name' => 'sometimes|nullable|string|max:80',
+            'instagram_url' => 'sometimes|nullable|url|max:255',
+            'tiktok_url' => 'sometimes|nullable|url|max:255',
+            'support_email' => 'sometimes|required|email|max:255',
+            'sales_email' => 'sometimes|required|email|max:255',
+            'phone' => 'sometimes|required|string|max:40',
+            'dark_luxury_theme' => 'sometimes|boolean',
+            'promo_banner' => 'sometimes|boolean',
+            'customer_reviews' => 'sometimes|boolean',
+            'guest_checkout' => 'sometimes|boolean',
+        ]);
+
+        return response()->json(AppSetting::saveSettings($settings));
+    }
+
     // GET /api/admin/stats
     public function stats()
     {

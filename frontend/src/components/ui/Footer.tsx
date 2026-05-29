@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useSettings } from '../../hooks/useSettings'
 
 const LINKS = {
   Company:  [
@@ -28,6 +29,14 @@ const LINKS = {
 }
 
 export default function Footer() {
+  const { data: settings } = useSettings()
+  const brandName = settings?.brand_name ?? 'DESK+'
+  const socialLinks = [
+    { label: settings?.instagram_name || 'Instagram', href: settings?.instagram_url ?? 'https://instagram.com/souk', icon: 'photo_camera' },
+    { label: 'Facebook', href: settings?.facebook_url ?? 'https://facebook.com/souk', icon: 'language' },
+    { label: 'TikTok', href: settings?.tiktok_url ?? 'https://tiktok.com/@souk', icon: 'smart_display' },
+  ].filter((link) => link.href)
+
   return (
     <footer className="bg-surface-container-low border-t border-outline-variant mt-16">
       <div className="max-w-screen-2xl mx-auto px-8 py-16">
@@ -36,15 +45,15 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg btn-grad grid place-items-center text-white font-black text-sm">D+</div>
-              <span className="font-black tracking-tight">DESK+</span>
+              <span className="font-black tracking-tight">{brandName}</span>
             </div>
             <p className="text-sm text-on-surface-variant leading-relaxed max-w-xs">
               Craft your perfect workspace. Premium office furniture for teams who demand precision.
             </p>
             <div className="flex gap-3 mt-5">
-              {['instagram', 'LinkedIn', 'X'].map((s) => (
-                <a key={s} href="#" className="w-8 h-8 rounded-full bg-surface-container-high grid place-items-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>link</span>
+              {socialLinks.map((social) => (
+                <a key={social.label} href={social.href ?? '#'} target="_blank" rel="noreferrer" aria-label={social.label} className="w-8 h-8 rounded-full bg-surface-container-high grid place-items-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors">
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{social.icon}</span>
                 </a>
               ))}
             </div>

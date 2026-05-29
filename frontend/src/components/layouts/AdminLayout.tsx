@@ -10,6 +10,7 @@ const NAV = [
   { to: '/admin/discounts', label: 'Discounts',  icon: 'local_offer'                },
   { to: '/admin/reports',   label: 'Reports',    icon: 'bar_chart'                  },
   { to: '/admin/sellers',   label: 'Sellers',    icon: 'storefront'                 },
+  { to: '/admin/settings',  label: 'Settings',   icon: 'settings'                   },
 ]
 
 export default function AdminLayout() {

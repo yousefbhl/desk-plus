@@ -46,6 +46,7 @@ Route::get('/products/{slug}/reviews', [ReviewController::class, 'index']);
 
 // Discount validation — public (used in cart before auth)
 Route::post('/discounts/validate', [DiscountController::class, 'validate']);
+Route::get('/settings', [AdminController::class, 'settings']);
 
 // ── AUTHENTICATED ─────────────────────────────────────────────────────────────
 
@@ -86,6 +87,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Dashboard stats — CEO view
         Route::get('/stats',   [AdminController::class, 'stats']);
+        Route::get('/settings',                       [AdminController::class, 'settings']);
+        Route::put('/settings',                       [AdminController::class, 'updateSettings']);
 
         // Orders management
         Route::get('/orders',                         [AdminController::class, 'orders']);

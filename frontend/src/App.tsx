@@ -41,6 +41,7 @@ const AdminUsers     = lazy(() => import('./admin/AdminUsers'))
 const AdminReports   = lazy(() => import('./admin/AdminReports'))
 const AdminDiscounts = lazy(() => import('./admin/AdminDiscounts'))
 const AdminSellers   = lazy(() => import('./admin/AdminSellers'))
+const AdminSettings  = lazy(() => import('./admin/AdminSettings'))
 
 // Seller
 const SellerDashboard = lazy(() => import('./seller/SellerDashboard'))
@@ -87,6 +88,7 @@ function App() {
           <Route path="reports"   element={<AdminReports />} />
           <Route path="discounts" element={<AdminDiscounts />} />
           <Route path="sellers"   element={<AdminSellers />} />
+          <Route path="settings"  element={<AdminSettings />} />
         </Route>
 
         <Route

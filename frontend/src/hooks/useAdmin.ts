@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '../api'
+import type { AppSettings } from '../types'
 
 export function useAdminStats() {
   return useQuery({
@@ -40,6 +41,25 @@ export function useAdminDiscounts(params?: object) {
   return useQuery({
     queryKey: ['admin', 'discounts', params],
     queryFn: () => adminApi.discounts(params).then((r) => r.data),
+  })
+}
+
+export function useAdminSettings() {
+  return useQuery({
+    queryKey: ['admin', 'settings'],
+    queryFn: () => adminApi.settings().then((r) => r.data),
+  })
+}
+
+export function useUpdateAdminSettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<AppSettings>) =>
+      adminApi.updateSettings(data).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'settings'] })
+      qc.invalidateQueries({ queryKey: ['settings'] })
+    },
   })
 }
 
