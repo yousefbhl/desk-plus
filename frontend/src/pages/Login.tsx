@@ -68,7 +68,7 @@ export default function Login() {
               <label className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">Email</label>
               <div className="relative">
                 <input className="w-full mt-1 h-12 px-4 pl-11 rounded-xl bg-surface-container-low border border-outline-variant focus:border-primary" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required/>
-                <span className="material-symbols-outlined absolute left-3 top-1/2 translate-y-1 text-on-surface-variant">mail</span>
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 mt-0.5 text-on-surface-variant">mail</span>
               </div>
             </div>
             <div>
@@ -78,7 +78,7 @@ export default function Login() {
               </div>
               <div className="relative">
                 <input type={showPw ? 'text' : 'password'} className="w-full mt-1 h-12 px-4 pl-11 pr-12 rounded-xl bg-surface-container-low border border-outline-variant focus:border-primary" value={password} onChange={(e) => setPassword(e.target.value)} required/>
-                <span className="material-symbols-outlined absolute left-3 top-1/2 translate-y-1 text-on-surface-variant">lock</span>
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 mt-0.5 text-on-surface-variant">lock</span>
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2"><span className="material-symbols-outlined text-on-surface-variant">{showPw ? 'visibility_off' : 'visibility'}</span></button>
               </div>
             </div>
