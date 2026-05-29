@@ -47,6 +47,7 @@ const AdminSettings  = lazy(() => import('./admin/AdminSettings'))
 const SellerDashboard = lazy(() => import('./seller/SellerDashboard'))
 const SellerProducts  = lazy(() => import('./seller/SellerProducts'))
 const SellerStats     = lazy(() => import('./seller/SellerStats'))
+const SellerOrders    = lazy(() => import('./seller/SellerOrders'))
 
 function App() {
   return (
@@ -103,6 +104,7 @@ function App() {
         >
           <Route index           element={<SellerDashboard />} />
           <Route path="products" element={<SellerProducts />} />
+          <Route path="orders"   element={<SellerOrders />} />
           <Route path="stats"    element={<SellerStats />} />
         </Route>
       </Routes>

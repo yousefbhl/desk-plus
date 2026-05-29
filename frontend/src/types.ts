@@ -231,6 +231,29 @@ export interface Order {
   updated_at?: string
 }
 
+export interface SellerOrder {
+  id: number
+  reference?: string
+  status: string
+  payment_status?: string
+  customer?: {
+    name?: string | null
+    email?: string | null
+  }
+  items_count: number
+  seller_total: number
+  items?: Array<{
+    id: number
+    product_id?: number
+    product_name: string
+    quantity: number
+    unit_price?: number
+    total: number
+  }>
+  created_at: string
+  updated_at?: string
+}
+
 export interface Discount {
   id: number
   code: string

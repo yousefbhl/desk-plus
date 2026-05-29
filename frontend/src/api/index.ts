@@ -2,7 +2,7 @@
 import api from './api';
 import type {
   AppSettings, AuthResponse, Cart, CheckoutPayload, Discount,
-  PaginatedResponse, Product, ProductFilters, Order, User,
+  PaginatedResponse, Product, ProductFilters, Order, SellerOrder, User,
 } from '../types';
 
 // ── Auth ─────────────────────────────────────────────────────
@@ -75,8 +75,11 @@ export const cartApi = {
 
 // ── Seller ──────────────────────────────────────────────────
 export const sellerApi = {
-  stats:    () => api.get('/admin/stats'),
-  products: (params?: object) => api.get<PaginatedResponse<Product>>('/products', { params: { ...params as Record<string, unknown>, mine: 1 } }),
+  stats:    () => api.get('/seller/stats'),
+  products: (params?: object) => api.get<PaginatedResponse<Product>>('/seller/products', { params }),
+  orders:   (params?: object) => api.get<PaginatedResponse<SellerOrder>>('/seller/orders', { params }),
+  updateOrderStatus: (id: number, status: string, note?: string) =>
+    api.patch<SellerOrder>(`/seller/orders/${id}/status`, { status, note }),
 };
 
 // ── Wishlist ────────────────────────────────────────────────

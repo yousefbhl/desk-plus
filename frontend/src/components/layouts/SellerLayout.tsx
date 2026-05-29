@@ -5,12 +5,14 @@ import ToastContainer from '../ui/Toast'
 const NAV = [
   { to: '/seller',          label: 'Dashboard',  icon: 'dashboard',              exact: true },
   { to: '/seller/products', label: 'My Products', icon: 'inventory_2'                        },
+  { to: '/seller/orders',   label: 'Commandes',   icon: 'receipt_long'                       },
   { to: '/seller/stats',    label: 'Statistics',  icon: 'analytics'                          },
 ]
 
 const PAGE_LABELS: Record<string, string> = {
   '/seller':          'Dashboard',
   '/seller/products': 'My Products',
+  '/seller/orders':   'Commandes',
   '/seller/stats':    'Statistics',
 }
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SellerController;
 use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -77,6 +78,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reviews — write
     Route::post('/products/{slug}/reviews',   [ReviewController::class, 'store']);
     Route::delete('/reviews/{review}',        [ReviewController::class, 'destroy']);
+
+    // Seller workspace
+    Route::prefix('seller')->group(function () {
+        Route::get('/stats',                   [SellerController::class, 'stats']);
+        Route::get('/products',                [SellerController::class, 'products']);
+        Route::get('/orders',                  [SellerController::class, 'orders']);
+        Route::patch('/orders/{order}/status', [SellerController::class, 'updateOrderStatus']);
+    });
 
     // ── ADMIN ONLY ────────────────────────────────────────────────
     // All routes below check role=admin inside the controller
