@@ -24,6 +24,7 @@ export default function AdminDiscounts() {
     )
   }
 
+  
   const activeDiscount = discounts.find((d: any) => d.is_active)
 
   return (
