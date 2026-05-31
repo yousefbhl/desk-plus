@@ -29,6 +29,8 @@ const COLOR_OPTIONS: readonly { hex: string; slug: string; border?: boolean }[] 
   { hex: '#ba0a0d', slug: 'red' },
 ]
 
+
+
 const MATERIAL_OPTIONS = ['Oak', 'Walnut', 'Mesh', 'Steel', 'Leather', 'Linen'] as const
 
 const SORT_OPTIONS = [
