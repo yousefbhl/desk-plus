@@ -14,6 +14,8 @@ interface AuthState {
   register:   (data: { name: string; email: string; password: string; password_confirmation: string; phone?: string; role?: string }) => Promise<void>
   logout:     () => Promise<void>
   fetchUser:  () => Promise<void>
+  loginWithToken: (token: string) => Promise<void>
+  setRole:        (role: 'customer' | 'seller') => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -60,6 +62,18 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('desk_token')
           set({ user: null, token: null, isAuth: false, loading: false })
         }
+      },
+
+      loginWithToken: async (token) => {
+        set({ loading: true })
+        localStorage.setItem('desk_token', token)
+        const { data } = await authApi.me()
+        set({ user: data, token, isAuth: true, loading: false })
+      },
+
+      setRole: async (role) => {
+        const { data } = await authApi.setRole(role)
+        set({ user: data.user, isAuth: true })
       },
     }),
     {

@@ -9,13 +9,24 @@ import type {
 export const authApi = {
   login:    (email: string, password: string) =>
     api.post<AuthResponse>('/login', { email, password }),
-
-  register: (data: { name: string; email: string; password: string; password_confirmation: string; phone?: string }) =>
+ 
+  register: (data: { name: string; email: string; password: string; password_confirmation: string; phone?: string; role?: string }) =>
     api.post<AuthResponse>('/register', data),
-
+ 
   me:       () => api.get<User>('/me'),
   logout:   () => api.post('/logout'),
-};
+ 
+  // ── Google OAuth ──────────────────────────────────────────
+  // Full backend URL the "Continue with Google" button redirects to.
+  // We hardcode the API origin because this is a top-level browser
+  // navigation, NOT an axios call (axios baseURL doesn't apply here).
+  googleRedirectUrl: 'http://localhost:8000/api/auth/google/redirect',
+ 
+  // Called from the choose-role page. Token must already be stored
+  // (the axios interceptor attaches it as Bearer).
+  setRole: (role: 'customer' | 'seller') =>
+    api.post<{ user: User }>('/auth/set-role', { role }),
+}
 
 // ── Products ─────────────────────────────────────────────────
 export const productsApi = {

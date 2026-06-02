@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\Route;
 // Auth
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect']);
+Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 
 // Catalog lookups — used by filters & dropdowns
 Route::get('/categories', [CatalogController::class, 'categories']);
@@ -56,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::get('/me',     [AuthController::class, 'me']);
     Route::post('/logout',[AuthController::class, 'logout']);
+    Route::post('/auth/set-role', [AuthController::class, 'setRole']);
 
     // Wishlist
     Route::get('/me/wishlist',               [WishlistController::class, 'index']);

@@ -2,10 +2,8 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import MainLayout from './components/layouts/MainLayout'
 import AdminLayout from './components/layouts/AdminLayout'
-import SellerLayout from './components/layouts/SellerLayout'
 import AuthGuard from './components/guards/AuthGuard'
 import AdminGuard from './components/guards/AdminGuard'
-import SellerGuard from './components/guards/SellerGuard'
 
 function PageLoader() {
   return (
@@ -19,6 +17,8 @@ function PageLoader() {
 const Login          = lazy(() => import('./pages/Login'))
 const Register       = lazy(() => import('./pages/Register'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const OAuthCallback  = lazy(() => import('./pages/OAuthCallback'))   // ← NEW
+const ChooseRole     = lazy(() => import('./pages/ChooseRole'))      // ← NEW
 
 // Customer
 const Home          = lazy(() => import('./pages/Home'))
@@ -26,12 +26,10 @@ const Products      = lazy(() => import('./pages/Products'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Spaces        = lazy(() => import('./pages/Spaces'))
 const Styles        = lazy(() => import('./pages/Styles'))
-const Search        = lazy(() => import('./pages/Search'))
 const Cart          = lazy(() => import('./pages/Cart'))
 const Checkout      = lazy(() => import('./pages/Checkout'))
 const Account       = lazy(() => import('./pages/Account'))
 const OrderTracking = lazy(() => import('./pages/OrderTracking'))
-const NotFound      = lazy(() => import('./pages/NotFound'))
 
 // Admin (Recharts only loads when /admin is visited)
 const Dashboard      = lazy(() => import('./admin/Dashboard'))
@@ -41,25 +39,31 @@ const AdminUsers     = lazy(() => import('./admin/AdminUsers'))
 const AdminReports   = lazy(() => import('./admin/AdminReports'))
 const AdminDiscounts = lazy(() => import('./admin/AdminDiscounts'))
 const AdminSellers   = lazy(() => import('./admin/AdminSellers'))
-const AdminSettings  = lazy(() => import('./admin/AdminSettings'))
 
-// Seller
+// Seller stubs (pages not built yet — no crash)
 const SellerDashboard = lazy(() => import('./seller/SellerDashboard'))
 const SellerProducts  = lazy(() => import('./seller/SellerProducts'))
 const SellerStats     = lazy(() => import('./seller/SellerStats'))
-const SellerOrders    = lazy(() => import('./seller/SellerOrders'))
 
 function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+        {/*
+          OAuth landing routes — MUST be public and OUTSIDE MainLayout/AuthGuard.
+          The user arrives here from Google with a token in the URL but isn't
+          "logged in" in the app sense yet, so AuthGuard would bounce them.
+          They also must sit ABOVE the catch-all "*" route below.
+        */}
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
+        <Route path="/choose-role"    element={<ChooseRole />} />
+
         <Route element={<MainLayout />}>
           <Route path="/"               element={<Home />} />
           <Route path="/products"       element={<Products />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/spaces"         element={<Spaces />} />
           <Route path="/styles"         element={<Styles />} />
-          <Route path="/search"         element={<Search />} />
           <Route path="/cart"           element={<Cart />} />
           <Route path="/login"          element={<Login />} />
           <Route path="/register"       element={<Register />} />
@@ -69,7 +73,6 @@ function App() {
             <Route path="/account"    element={<Account />} />
             <Route path="/orders/:id" element={<OrderTracking />} />
           </Route>
-          <Route path="*" element={<NotFound />} />
         </Route>
 
         <Route
@@ -89,24 +92,15 @@ function App() {
           <Route path="reports"   element={<AdminReports />} />
           <Route path="discounts" element={<AdminDiscounts />} />
           <Route path="sellers"   element={<AdminSellers />} />
-          <Route path="settings"  element={<AdminSettings />} />
         </Route>
 
-        <Route
-          path="/seller"
-          element={
-            <AuthGuard>
-              <SellerGuard>
-                <SellerLayout />
-              </SellerGuard>
-            </AuthGuard>
-          }
-        >
+        <Route path="/seller" element={<AuthGuard><AdminLayout /></AuthGuard>}>
           <Route index           element={<SellerDashboard />} />
           <Route path="products" element={<SellerProducts />} />
-          <Route path="orders"   element={<SellerOrders />} />
           <Route path="stats"    element={<SellerStats />} />
         </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   )
