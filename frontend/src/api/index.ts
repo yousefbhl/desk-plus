@@ -28,6 +28,23 @@ export const authApi = {
     api.post<{ user: User }>('/auth/set-role', { role }),
 }
 
+// ── Password reset ────────────────────────────────────────────
+export const passwordApi = {
+  forgot: (email: string) =>
+    api.post<{ message: string }>('/password/forgot', { email }),
+
+  verify: (email: string, code: string) =>
+    api.post<{ message: string }>('/password/verify', { email, code }),
+
+  reset: (email: string, code: string, password: string, password_confirmation: string) =>
+    api.post<{ message: string }>('/password/reset', {
+      email,
+      code,
+      password,
+      password_confirmation,
+    }),
+}
+
 // ── Products ─────────────────────────────────────────────────
 export const productsApi = {
   list:        (filters: ProductFilters = {}) =>

@@ -1,203 +1,176 @@
-import { FormEvent, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-
-type Step = 1 | 2 | 3
-
-function stepBadge(step: Step, activeStep: Step) {
-  if (step === activeStep) return `Step ${step} · Active`
-  if (step < activeStep) return `Step ${step} · Done`
-  return `Step ${step}`
-}
-
-function stepCardClass(step: Step, activeStep: Step) {
-  const base = 'rounded-xl p-8 relative transition-all duration-300'
-  if (step === activeStep) return `${base} bg-surface-container-lowest shadow-ambient`
-  return `${base} bg-surface-container-lowest shadow-ambient`
-}
-
-function badgeClass(step: Step, activeStep: Step) {
-  if (step <= activeStep) return 'btn-grad text-white'
-  return 'bg-surface-container-high text-on-surface'
-}
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { passwordApi } from '../api'
+import { useToastStore } from '../store/toastStore'
 
 export default function ForgotPassword() {
-  const navigate = useNavigate()
-  const [activeStep, setActiveStep] = useState<Step>(1)
+  const [step,  setStep]  = useState<1 | 2 | 3>(1)
   const [email, setEmail] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
+  const [code,  setCode]  = useState('')
+  const [pw,    setPw]    = useState('')
+  const [pwc,   setPwc]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(0)   // resend timer (seconds)
+  const { show } = useToastStore()
 
-  const normalizedEmail = email.trim()
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
-  const passwordLong = newPassword.length >= 12
-  const passwordMixed = /[A-Za-z]/.test(newPassword) && /\d/.test(newPassword)
-  const passwordHasSymbol = /[^A-Za-z0-9]/.test(newPassword)
-  const passwordsMatch = newPassword.length > 0 && newPassword === confirmPassword
+  // countdown for the "resend code" button
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+  useEffect(() => {
+    if (cooldown <= 0) { if (timer.current) clearInterval(timer.current); return }
+    timer.current = setInterval(() => setCooldown((c) => c - 1), 1000)
+    return () => { if (timer.current) clearInterval(timer.current) }
+  }, [cooldown])
 
-  const strength = useMemo(() => {
-    return [passwordLong, passwordMixed, passwordHasSymbol].filter(Boolean).length
-  }, [passwordLong, passwordMixed, passwordHasSymbol])
-
-  const sendResetLink = (event: FormEvent) => {
-    event.preventDefault()
-    if (!emailValid) {
-      setError('Enter a valid email first.')
-      return
+  // ── STEP 1 — request a code ──────────────────────────────────
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const { data } = await passwordApi.forgot(email)
+      show(data.message ?? 'If an account exists, a code has been sent.', 'success')
+      setStep(2)
+      setCooldown(45) // can resend after 45s
+    } catch (err: any) {
+      // 429 = throttled; show the server's message
+      show(err?.response?.data?.message ?? 'Something went wrong. Try again.', 'error')
+    } finally {
+      setLoading(false)
     }
-
-    setError('')
-    setActiveStep(2)
   }
 
-  const openPasswordStep = () => {
-    setError('')
-    setActiveStep(3)
+  // resend from step 2
+  const handleResend = async () => {
+    if (cooldown > 0) return
+    setLoading(true)
+    try {
+      const { data } = await passwordApi.forgot(email)
+      show(data.message ?? 'Code resent.', 'success')
+      setCooldown(45)
+    } catch (err: any) {
+      show(err?.response?.data?.message ?? 'Could not resend. Try again.', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const finishReset = (event: FormEvent) => {
-    event.preventDefault()
-    if (!passwordLong || !passwordMixed || !passwordsMatch) {
-      setError('Complete the password rules before signing in.')
-      return
+  // ── STEP 2 — verify the code ─────────────────────────────────
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (code.length !== 6) { show('Enter the 6-digit code from your email', 'error'); return }
+    setLoading(true)
+    try {
+      await passwordApi.verify(email, code)
+      setStep(3)
+    } catch (err: any) {
+      show(err?.response?.data?.message ?? 'Invalid or expired code.', 'error')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    setError('')
-    navigate('/login')
+  // ── STEP 3 — set new password ────────────────────────────────
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (pw.length < 8) { show('Password must be at least 8 characters', 'error'); return }
+    if (pw !== pwc)    { show('Passwords do not match', 'error'); return }
+    setLoading(true)
+    try {
+      await passwordApi.reset(email, code, pw, pwc)
+      show('Password updated! Please sign in.', 'success')
+      setTimeout(() => { window.location.href = '/login' }, 800)
+    } catch (err: any) {
+      show(err?.response?.data?.message ?? 'Could not reset password.', 'error')
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
-      <div className="w-full max-w-md mx-auto">
-        {activeStep === 1 && (
-        <form onSubmit={sendResetLink} className={stepCardClass(1, activeStep)}>
-          <div className={`absolute -top-3 left-8 px-3 py-1 text-[10px] font-bold uppercase tracking-widest-2 rounded-full ${badgeClass(1, activeStep)}`}>
-            {stepBadge(1, activeStep)}
-          </div>
-          <div className="text-xs font-bold uppercase tracking-widest-2 text-primary mt-2">Reset password</div>
-          <h2 className="h-display text-3xl mt-2">Forgot it? <span className="italic font-light">Happens.</span></h2>
-          <p className="text-sm text-on-surface-variant mt-3">Enter your Gmail or account email. We will move you to the next setup step.</p>
+    <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-ambient p-10">
 
-          {error && activeStep === 1 && <p className="text-sm text-red-600 mt-3">{error}</p>}
+        {/* Logo */}
+        <div className="flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 rounded-lg btn-grad grid place-items-center text-white font-black text-sm">D+</div>
+          <span className="font-black tracking-tight">DESK+</span>
+        </div>
 
-          <div className="mt-6">
-            <label className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">Email</label>
-            <input
-              type="email"
-              className="w-full mt-1 h-12 px-4 rounded-xl bg-surface-container-low border border-outline-variant focus:border-primary outline-none"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              disabled={activeStep !== 1}
-            />
-          </div>
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 mb-8">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="flex items-center gap-2">
+              <div className={`w-7 h-7 rounded-full grid place-items-center text-xs font-bold transition-colors ${n < step ? 'bg-primary text-white' : n === step ? 'bg-primary text-white pulse-ring' : 'bg-surface-container-high text-on-surface-variant'}`}>
+                {n < step ? <span className="material-symbols-outlined" style={{ fontSize: 14 }}>check</span> : n}
+              </div>
+              {n < 3 && <div className={`flex-1 h-0.5 w-8 rounded-full ${n < step ? 'bg-primary' : 'bg-surface-container-high'}`} />}
+            </div>
+          ))}
+        </div>
 
-          <button
-            type="submit"
-            disabled={activeStep !== 1}
-            className="w-full mt-5 btn-grad text-white font-bold py-3.5 rounded-xl uppercase tracking-widest-2 text-sm disabled:opacity-50"
-          >
-            Send reset link
-          </button>
-
-          <div className="my-6 h-px bg-outline-variant"></div>
-          <div className="text-sm flex items-center justify-between">
-            <Link to="/login" className="text-on-surface-variant">&larr; Back to sign in</Link>
-            <Link to="/register" className="text-primary font-semibold underline">Create account</Link>
-          </div>
-          <div className="mt-6 p-3 rounded-lg bg-surface-container-low text-xs flex gap-2">
-            <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '18px' }}>info</span>
-            <span className="text-on-surface-variant">Not getting our emails? Add <strong>hello@deskplus.ma</strong> to your contacts.</span>
-          </div>
-        </form>
+        {/* STEP 1 */}
+        {step === 1 && (
+          <form onSubmit={handleSendCode} className="space-y-5">
+            <div>
+              <h2 className="h-display text-2xl mb-1">FORGOT PASSWORD?</h2>
+              <p className="text-sm text-on-surface-variant">Enter your email and we'll send a 6-digit code.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Email Address</label>
+              <input type="email" required className="field" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <button type="submit" disabled={loading} className="btn-grad w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
+              {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Send Code →'}
+            </button>
+            <Link to="/login" className="block text-center text-sm text-on-surface-variant hover:text-on-surface">← Back to Sign In</Link>
+          </form>
         )}
 
-        {activeStep === 2 && (
-        <div className={stepCardClass(2, activeStep)}>
-          <div className={`absolute -top-3 left-8 px-3 py-1 text-[10px] font-bold uppercase tracking-widest-2 rounded-full ${badgeClass(2, activeStep)}`}>
-            {stepBadge(2, activeStep)}
-          </div>
-          <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant mt-2">Check inbox</div>
-          <h2 className="h-display text-3xl mt-2">We sent the link.</h2>
-          <p className="text-sm text-on-surface-variant mt-3">Open the reset email for {normalizedEmail}.</p>
-
-          <div className="mt-6 bg-surface-container-lowest rounded-xl p-5 shadow-soft">
-            <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">From</div>
-            <div className="font-semibold text-sm">Desk+ Atelier &lt;security@deskplus.ma&gt;</div>
-            <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant mt-3">Subject</div>
-            <div className="font-semibold text-sm">Reset your Desk+ password</div>
+        {/* STEP 2 */}
+        {step === 2 && (
+          <form onSubmit={handleVerifyCode} className="space-y-5">
+            <div className="w-12 h-12 rounded-full bg-primary/10 grid place-items-center mb-2">
+              <span className="material-symbols-outlined text-primary" style={{ fontSize: 24 }}>mark_email_read</span>
+            </div>
+            <div>
+              <h2 className="h-display text-2xl mb-1">CHECK INBOX</h2>
+              <p className="text-sm text-on-surface-variant">We sent a 6-digit code to <strong>{email}</strong></p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Verification Code</label>
+              <input type="text" inputMode="numeric" maxLength={6} className="field !text-center !font-mono !text-2xl !tracking-widest" placeholder="000000" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g,''))} />
+            </div>
+            <button type="submit" disabled={loading} className="btn-grad w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
+              {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Verify Code →'}
+            </button>
             <button
               type="button"
-              onClick={openPasswordStep}
-              className="w-full mt-4 p-4 rounded-lg btn-grad text-white text-center font-bold text-sm uppercase tracking-widest-2"
+              onClick={handleResend}
+              disabled={cooldown > 0 || loading}
+              className="block w-full text-center text-sm text-on-surface-variant hover:text-on-surface disabled:opacity-50"
             >
-              Reset password &rarr;
+              {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
             </button>
-            <div className="text-[11px] text-on-surface-variant mt-3 text-center">Or paste: deskplus.ma/r/a8X2...sQ</div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-between text-sm">
-            <span className="text-on-surface-variant">Didn't get it?</span>
-            <button type="button" onClick={() => setActiveStep(1)} className="font-semibold text-primary">Change email</button>
-          </div>
-        </div>
+          </form>
         )}
 
-        {activeStep === 3 && (
-        <form onSubmit={finishReset} className={stepCardClass(3, activeStep)}>
-          <div className={`absolute -top-3 left-8 px-3 py-1 text-[10px] font-bold uppercase tracking-widest-2 rounded-full ${badgeClass(3, activeStep)}`}>
-            {stepBadge(3, activeStep)}
-          </div>
-          <div className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant mt-2">New password</div>
-          <h2 className="h-display text-3xl mt-2">Set a new one.</h2>
-          <p className="text-sm text-on-surface-variant mt-3">12+ characters. We recommend a passphrase with letters and numbers.</p>
-
-          {error && activeStep === 3 && <p className="text-sm text-red-600 mt-3">{error}</p>}
-
-          <div className="mt-5">
-            <label className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">New password</label>
-            <input
-              type="password"
-              className="w-full mt-1 h-12 px-4 rounded-xl bg-surface-container-lowest border border-outline-variant outline-none focus:border-primary disabled:opacity-60"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-            />
-            <div className="flex gap-1.5 mt-2">
-              {[1, 2, 3, 4].map((bar) => (
-                <div key={bar} className={`flex-1 h-1.5 rounded-full ${bar <= strength + 1 ? 'bg-emerald-500' : 'bg-surface-container-high'}`} />
-              ))}
+        {/* STEP 3 */}
+        {step === 3 && (
+          <form onSubmit={handleReset} className="space-y-5">
+            <div>
+              <h2 className="h-display text-2xl mb-1">NEW PASSWORD</h2>
+              <p className="text-sm text-on-surface-variant">Choose a strong new password.</p>
             </div>
-            <div className="text-xs text-emerald-700 font-semibold mt-1">{strength >= 2 ? 'Strong' : 'Keep going'}</div>
-          </div>
-
-          <div className="mt-4">
-            <label className="text-xs font-bold uppercase tracking-widest-2 text-on-surface-variant">Confirm new password</label>
-            <input
-              type="password"
-              className={`w-full mt-1 h-12 px-4 rounded-xl bg-surface-container-lowest outline-none disabled:opacity-60 ${passwordsMatch ? 'border-2 border-emerald-500' : 'border border-outline-variant focus:border-primary'}`}
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-            />
-            {passwordsMatch && (
-              <div className="text-xs text-emerald-700 mt-1 flex items-center gap-1">
-                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check_circle</span>
-                Passwords match
-              </div>
-            )}
-          </div>
-
-          <ul className="mt-5 space-y-1.5 text-xs">
-            <li className={`flex items-center gap-2 ${passwordLong ? 'text-emerald-700' : 'text-on-surface-variant'}`}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{passwordLong ? 'check' : 'circle'}</span>12+ characters</li>
-            <li className={`flex items-center gap-2 ${passwordMixed ? 'text-emerald-700' : 'text-on-surface-variant'}`}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{passwordMixed ? 'check' : 'circle'}</span>Mix of letters &amp; numbers</li>
-            <li className={`flex items-center gap-2 ${passwordHasSymbol ? 'text-emerald-700' : 'text-on-surface-variant'}`}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{passwordHasSymbol ? 'check' : 'circle'}</span>One symbol (optional)</li>
-          </ul>
-
-          <button
-            type="submit"
-            className="w-full mt-6 btn-grad text-white font-bold py-3.5 rounded-xl uppercase tracking-widest-2 text-sm"
-          >
-            Update password &amp; sign in
-          </button>
-        </form>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">New Password</label>
+              <input type="password" required minLength={8} className="field" placeholder="Min. 8 characters" value={pw} onChange={(e) => setPw(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest-2 mb-1.5 text-on-surface-variant">Confirm Password</label>
+              <input type="password" required className="field" placeholder="Repeat password" value={pwc} onChange={(e) => setPwc(e.target.value)} />
+            </div>
+            <button type="submit" disabled={loading} className="btn-grad w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
+              {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Update Password →'}
+            </button>
+          </form>
         )}
       </div>
     </div>

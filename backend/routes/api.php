@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SellerController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,11 @@ use Illuminate\Support\Facades\Route;
 // Auth
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
+// Password reset
+Route::post('/password/forgot', [PasswordResetController::class, 'sendCode']);
+Route::post('/password/verify', [PasswordResetController::class, 'verifyCode']);
+Route::post('/password/reset',  [PasswordResetController::class, 'reset']);
 Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect']);
 Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 
