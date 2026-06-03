@@ -21,7 +21,9 @@ export default function AdminSellers() {
     )
   }
 
-  const topSellers = sellers.slice(0, 3)
+  const topSellers = [...sellers]
+    .sort((a, b) => (b.products_count ?? 0) - (a.products_count ?? 0))
+    .slice(0, 3)
 
   return (
     <>

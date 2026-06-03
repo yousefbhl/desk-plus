@@ -193,6 +193,7 @@ class AdminController extends Controller
     {
         $query = User::where('role', 'seller')
             ->withCount('products')
+            ->orderByDesc('products_count')
             ->latest();
 
         if ($request->search) {
