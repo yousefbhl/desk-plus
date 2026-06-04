@@ -391,9 +391,9 @@ export default function Home() {
             <span className="italic-display text-primary font-normal">"</span>The chair you don't think about. The desk that makes you want to stay. Five hours in and I forget I'm sitting — Desk+ furniture <em className="italic-display">disappears into the work.</em><span className="italic-display text-primary font-normal">"</span>
           </blockquote>
           <div className="mt-10 inline-flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full border border-on-surface grid place-items-center font-display text-sm">AT</div>
+            <div className="w-10 h-10 rounded-full border border-on-surface grid place-items-center font-display text-sm">AW</div>
             <div className="text-left">
-              <div className="font-bold">Aïcha Talbi</div>
+              <div className="font-bold">Aya Wakil</div>
               <div className="small-caps text-on-surface-variant text-[10px] mt-0.5">Founder, Atelier Nord · Casablanca</div>
             </div>
           </div>

@@ -1,205 +1,97 @@
-import { useMemo } from 'react'
-import type { SellerOrder } from '../types'
-import { useSellerOrders, useUpdateSellerOrderStatus } from '../hooks/useSeller'
-import { useUiStore } from '../store/uiStore'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { sellerApi } from '../api'
+
+const fmt = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n || 0))
 
 const STATUS_CHIP: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-700',
+  pending:   'bg-red-100 text-primary',
   preparing: 'bg-blue-100 text-blue-700',
-  shipping: 'bg-purple-100 text-purple-700',
-  shipped: 'bg-purple-100 text-purple-700',
+  shipping:  'bg-purple-100 text-purple-700',
   delivered: 'bg-emerald-100 text-emerald-700',
-  confirmed: 'bg-emerald-100 text-emerald-700',
-  cancelled: 'bg-red-100 text-primary',
+  cancelled: 'bg-surface-container-high text-on-surface-variant',
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: 'Pending',
-  preparing: 'Confirmed',
-  shipping: 'Shipping',
-  shipped: 'Shipping',
-  delivered: 'Delivered',
-  confirmed: 'Confirmed',
-  cancelled: 'Cancelled',
-}
-
-function formatMoney(amount: number | undefined) {
-  return `${(amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DH`
-}
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleString('fr-FR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function trackingText(status: string) {
-  if (status === 'cancelled') return 'Cancelled by support request'
-  if (status === 'delivered') return 'Order delivered to the customer'
-  if (status === 'shipping' || status === 'shipped') return 'Order is out for delivery'
-  if (status === 'preparing' || status === 'confirmed') return 'Order confirmed and queued for fulfillment'
-  return 'Waiting for seller confirmation'
-}
-
-function downloadOrderPdf(order: SellerOrder) {
-  const items = order.items?.map((item) =>
-    `<tr><td>${item.product_name}</td><td>${item.quantity}</td><td>${formatMoney(item.total)}</td></tr>`
-  ).join('') || ''
-
-  const html = `
-    <html>
-      <head>
-        <title>${order.reference ?? `Order-${order.id}`}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 32px; color: #1c1b1b; }
-          h1 { margin: 0 0 8px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 24px; }
-          th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
-          th { font-size: 12px; text-transform: uppercase; color: #666; }
-          .total { margin-top: 24px; font-size: 20px; font-weight: 800; }
-        </style>
-      </head>
-      <body>
-        <h1>${order.reference ?? `#${order.id}`}</h1>
-        <div>Client: ${order.customer?.name ?? 'Client'}</div>
-        <div>Date: ${formatDate(order.created_at)}</div>
-        <div>Status: ${STATUS_LABEL[order.status] ?? order.status}</div>
-        <table>
-          <thead><tr><th>Produit</th><th>Quantite</th><th>Total</th></tr></thead>
-          <tbody>${items}</tbody>
-        </table>
-        <div class="total">Montant seller: ${formatMoney(order.seller_total)}</div>
-      </body>
-    </html>
-  `
-
-  const win = window.open('', '_blank')
-  if (!win) return
-  win.document.write(html)
-  win.document.close()
-  win.focus()
-  win.print()
-}
+const TABS = [
+  { key: '',          label: 'All' },
+  { key: 'pending',   label: 'Pending' },
+  { key: 'preparing', label: 'Preparing' },
+  { key: 'shipping',  label: 'Shipping' },
+  { key: 'delivered', label: 'Delivered' },
+]
 
 export default function SellerOrders() {
-  const { data, isLoading } = useSellerOrders({ per_page: 20 })
-  const updateStatus = useUpdateSellerOrderStatus()
-  const { showToast } = useUiStore()
+  const [status, setStatus] = useState('')
+  const [search, setSearch] = useState('')
 
-  const orders = useMemo(() => data?.data ?? [], [data])
+  const { data, isLoading } = useQuery({
+    queryKey: ['seller-orders', status, search],
+    queryFn: () => sellerApi.orders({ status, search }),
+  })
 
-  const changeStatus = (order: SellerOrder, status: string) => {
-    updateStatus.mutate(
-      { id: order.id, status, note: status === 'cancelled' ? 'Cancelled by seller.' : 'Confirmed by seller.' },
-      {
-        onSuccess: () => showToast(status === 'cancelled' ? 'Commande annulee.' : 'Commande confirmee.', 'success'),
-        onError: () => showToast('Impossible de modifier la commande.', 'error'),
-      }
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
+  const rows = data?.data ?? []
 
   return (
-    <>
-      <div className="mb-7">
+    <div>
+      <div className="mb-6">
         <h1 className="h-display text-3xl">Commandes</h1>
-        <p className="text-sm text-on-surface-variant mt-2 max-w-2xl">
-          Superviser l'etat des commandes, le suivi des livraisons et les actions de confirmation ou d'annulation sensibles aux clients.
-        </p>
+        <p className="text-sm text-on-surface-variant">Orders containing your pieces</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-soft overflow-hidden">
-        <div className="p-6 border-b border-outline-variant">
-          <h2 className="h-display text-lg">Dernieres commandes</h2>
-          <p className="text-sm text-on-surface-variant mt-2">Cette file lit maintenant la vraie table de commandes.</p>
+      {/* Toolbar */}
+      <div className="bg-surface-container-lowest rounded-xl shadow-ambient mb-6">
+        <div className="flex items-center gap-1 px-5 pt-4 border-b border-outline-variant overflow-x-auto">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setStatus(t.key)}
+              className={`px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${status === t.key ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
+        <div className="p-5">
+          <div className="relative max-w-md">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style={{ fontSize: 18 }}>search</span>
+            <input className="field !pl-9 !h-10" placeholder="Search by order reference…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+        </div>
+      </div>
 
+      {/* Table */}
+      <div className="bg-surface-container-lowest rounded-xl shadow-ambient overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="text-xs text-on-surface-variant border-b border-outline-variant">
+          <thead className="text-xs uppercase tracking-widest-2 text-on-surface-variant bg-surface-container-low">
             <tr>
-              <th className="text-left px-8 py-4 font-medium">Commande</th>
-              <th className="text-left py-4 font-medium">Client</th>
-              <th className="text-left py-4 font-medium">Statut</th>
-              <th className="text-left py-4 font-medium">Suivi de la livraison</th>
-              <th className="text-left py-4 font-medium">Montant</th>
-              <th className="text-right px-8 py-4 font-medium">Actions</th>
+              <th className="text-left px-5 py-3">Order</th>
+              <th className="text-left py-3">Customer</th>
+              <th className="text-left py-3">Piece</th>
+              <th className="text-right py-3">Qty</th>
+              <th className="text-right py-3">Earnings</th>
+              <th className="text-left py-3 px-5">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant/70">
-            {orders.map((order) => (
-              <tr key={order.id}>
-                <td className="px-8 py-3">
-                  <div className="font-mono font-bold text-on-surface">#{order.reference ?? `SK-${String(order.id).padStart(5, '0')}`}</div>
-                  <div className="text-xs text-on-surface-variant mt-1">{formatDate(order.created_at)}</div>
-                </td>
-                <td className="py-3">
-                  <div className="font-medium">{order.customer?.name ?? 'Client'}</div>
-                  <div className="text-xs text-on-surface-variant mt-1">{order.items_count} article{order.items_count > 1 ? 's' : ''}</div>
-                </td>
-                <td className="py-3">
-                  <span className={`chip ${STATUS_CHIP[order.status] ?? 'bg-surface-container-high text-on-surface-variant'}`}>
-                    {STATUS_LABEL[order.status] ?? order.status}
-                  </span>
-                </td>
-                <td className="py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center">
-                      <span className="material-symbols-outlined" style={{ fontSize: 18 }}>local_shipping</span>
-                    </span>
-                    <span className="text-on-surface-variant">{trackingText(order.status)}</span>
-                  </div>
-                </td>
-                <td className="py-3 font-black">{formatMoney(order.seller_total)}</td>
-                <td className="px-8 py-3">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => changeStatus(order, 'preparing')}
-                      disabled={updateStatus.isPending || order.status === 'cancelled' || order.status === 'delivered'}
-                      className="bg-[#00c853] text-black font-bold px-4 py-2.5 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check_circle</span>
-                      Confirmer
-                    </button>
-                    <button
-                      onClick={() => downloadOrderPdf(order)}
-                      className="border border-outline-variant bg-white font-semibold px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>download</span>
-                      PDF
-                    </button>
-                    <button
-                      onClick={() => changeStatus(order, 'cancelled')}
-                      disabled={updateStatus.isPending || order.status === 'cancelled' || order.status === 'delivered'}
-                      className="border border-red-200 bg-white text-primary font-semibold px-4 py-2.5 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>cancel</span>
-                      Annuler
-                    </button>
-                  </div>
-                </td>
+          <tbody className="divide-y divide-outline-variant/60">
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <tr key={i}><td colSpan={6} className="px-5 py-4"><div className="h-4 bg-surface-container-high rounded animate-pulse" /></td></tr>
+              ))
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={6} className="text-center py-16 text-on-surface-variant">No orders found</td></tr>
+            ) : rows.map((o: any, i: number) => (
+              <tr key={i} className="hover:bg-surface-container-low transition-colors">
+                <td className="px-5 py-3 font-mono font-bold text-primary">{o.reference}</td>
+                <td>{o.customer ?? 'Guest'}</td>
+                <td>{o.piece}</td>
+                <td className="text-right font-bold">{o.qty}</td>
+                <td className="text-right font-black">{fmt(o.earnings)} MAD</td>
+                <td className="px-5"><span className={`chip capitalize ${STATUS_CHIP[o.status] ?? 'bg-surface-container-high'}`}>{o.status}</span></td>
               </tr>
             ))}
-            {orders.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-8 py-10 text-center text-on-surface-variant">
-                  Aucune commande pour vos produits pour le moment.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
-    </>
+    </div>
   )
 }

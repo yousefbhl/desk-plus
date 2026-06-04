@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import SocialAuthButtons from '../components/auth/SocialAuthButtons'
 
@@ -10,6 +10,8 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as any)?.from ?? '/'
   const login = useAuthStore((s) => s.login)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,9 +21,11 @@ export default function Login() {
     try {
       await login(email, password)
       const user = useAuthStore.getState().user
-      if (user?.role === 'admin') navigate('/admin')
-      else if (user?.role === 'seller') navigate('/seller')
-      else navigate('/')
+      const dest =
+        user?.role === 'admin'  ? '/admin'  :
+        user?.role === 'seller' ? '/seller' :
+        from
+      navigate(dest, { replace: true })
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Invalid email or password')
     } finally {

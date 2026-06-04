@@ -5,21 +5,13 @@ interface Props {
   children?: React.ReactNode
 }
 
+/**
+ * Protects the /seller area.
+ * Sellers ONLY — admins are blocked (they have their own /admin area).
+ * Anyone else (customer, pending, logged-out) is bounced home.
+ */
 export default function SellerGuard({ children }: Props) {
-  const { user, loading } = useAuthStore()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 rounded-lg btn-grad grid place-items-center text-white font-black text-sm select-none">
-            D+
-          </div>
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      </div>
-    )
-  }
+  const { user } = useAuthStore()
 
   if (user?.role !== 'seller') {
     return <Navigate to="/" replace />

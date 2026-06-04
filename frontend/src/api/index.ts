@@ -29,13 +29,17 @@ export const authApi = {
 }
 
 // ── Password reset ────────────────────────────────────────────
+// ── Password Reset ───────────────────────────────────────────
 export const passwordApi = {
+  // Step 1 — request a code be emailed
   forgot: (email: string) =>
     api.post<{ message: string }>('/password/forgot', { email }),
-
+ 
+  // Step 2 — verify the code (doesn't consume it)
   verify: (email: string, code: string) =>
     api.post<{ message: string }>('/password/verify', { email, code }),
-
+ 
+  // Step 3 — set the new password
   reset: (email: string, code: string, password: string, password_confirmation: string) =>
     api.post<{ message: string }>('/password/reset', {
       email,
@@ -43,7 +47,7 @@ export const passwordApi = {
       password,
       password_confirmation,
     }),
-}
+};
 
 // ── Products ─────────────────────────────────────────────────
 export const productsApi = {
@@ -103,9 +107,32 @@ export const cartApi = {
 
 // ── Seller ──────────────────────────────────────────────────
 export const sellerApi = {
-  stats:    () => api.get('/seller/stats'),
-  products: (params?: object) => api.get<PaginatedResponse<Product>>('/seller/products', { params }),
-  orders:   (params?: object) => api.get<PaginatedResponse<SellerOrder>>('/seller/orders', { params }),
+  dashboard: () => api.get('/seller/dashboard').then(r => r.data),
+  stats:     () => api.get('/seller/stats').then(r => r.data),
+
+  products: (params: { search?: string; filter?: string; sort?: string; page?: number } = {}) =>
+    api.get('/seller/products', { params }).then(r => r.data),
+
+  createProduct: (payload: {
+    name: string
+    description?: string
+    price: number
+    compare_price?: number | null
+    sku?: string | null
+    stock: number
+    category_id: number
+    space_id?: number | null
+    taste_id?: number | null
+    image_url?: string | null
+    is_active?: boolean
+  }) => api.post('/seller/products', payload).then(r => r.data),
+
+  updateStock: (productId: number, stock: number) =>
+    api.patch(`/seller/products/${productId}/stock`, { stock }).then(r => r.data),
+
+  orders: (params: { status?: string; search?: string; page?: number } = {}) =>
+    api.get('/seller/orders', { params }).then(r => r.data),
+
   updateOrderStatus: (id: number, status: string, note?: string) =>
     api.patch<SellerOrder>(`/seller/orders/${id}/status`, { status, note }),
 };

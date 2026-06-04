@@ -90,10 +90,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Seller workspace
     Route::prefix('seller')->group(function () {
-        Route::get('/stats',                   [SellerController::class, 'stats']);
-        Route::get('/products',                [SellerController::class, 'products']);
-        Route::get('/orders',                  [SellerController::class, 'orders']);
-        Route::patch('/orders/{order}/status', [SellerController::class, 'updateOrderStatus']);
+        Route::get('/dashboard',                  [SellerController::class, 'dashboard']);
+        Route::get('/stats',                      [SellerController::class, 'stats']);
+        Route::get('/products',                   [SellerController::class, 'products']);
+        Route::post('/products',                  [SellerController::class, 'storeProduct']);
+        Route::patch('/products/{product}/stock', [SellerController::class, 'updateStock']);
+        Route::get('/orders',                     [SellerController::class, 'orders']);
+        Route::patch('/orders/{order}/status',    [SellerController::class, 'updateOrderStatus']);
     });
 
     // ── ADMIN ONLY ────────────────────────────────────────────────

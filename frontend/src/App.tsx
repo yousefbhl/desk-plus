@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import MainLayout from './components/layouts/MainLayout'
 import AdminLayout from './components/layouts/AdminLayout'
+import SellerLayout from './components/layouts/SellerLayout'
 import AuthGuard from './components/guards/AuthGuard'
 import AdminGuard from './components/guards/AdminGuard'
+import SellerGuard from './components/guards/SellerGuard'
 
 function PageLoader() {
   return (
@@ -17,8 +19,8 @@ function PageLoader() {
 const Login          = lazy(() => import('./pages/Login'))
 const Register       = lazy(() => import('./pages/Register'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
-const OAuthCallback  = lazy(() => import('./pages/OAuthCallback'))   // ← NEW
-const ChooseRole     = lazy(() => import('./pages/ChooseRole'))      // ← NEW
+const OAuthCallback  = lazy(() => import('./pages/OAuthCallback'))
+const ChooseRole     = lazy(() => import('./pages/ChooseRole'))
 
 // Customer
 const Home          = lazy(() => import('./pages/Home'))
@@ -39,23 +41,18 @@ const AdminUsers     = lazy(() => import('./admin/AdminUsers'))
 const AdminReports   = lazy(() => import('./admin/AdminReports'))
 const AdminDiscounts = lazy(() => import('./admin/AdminDiscounts'))
 const AdminSellers   = lazy(() => import('./admin/AdminSellers'))
-const AdminSettings  = lazy(() => import('./admin/AdminSettings'))
 
-// Seller stubs (pages not built yet — no crash)
+// Seller
 const SellerDashboard = lazy(() => import('./seller/SellerDashboard'))
 const SellerProducts  = lazy(() => import('./seller/SellerProducts'))
+const SellerOrders    = lazy(() => import('./seller/SellerOrders'))
 const SellerStats     = lazy(() => import('./seller/SellerStats'))
 
 function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/*
-          OAuth landing routes — MUST be public and OUTSIDE MainLayout/AuthGuard.
-          The user arrives here from Google with a token in the URL but isn't
-          "logged in" in the app sense yet, so AuthGuard would bounce them.
-          They also must sit ABOVE the catch-all "*" route below.
-        */}
+        {/* OAuth landing routes — public, outside layouts/guards */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route path="/choose-role"    element={<ChooseRole />} />
 
@@ -76,6 +73,7 @@ function App() {
           </Route>
         </Route>
 
+        {/* ADMIN — admins only */}
         <Route
           path="/admin"
           element={
@@ -93,12 +91,22 @@ function App() {
           <Route path="reports"   element={<AdminReports />} />
           <Route path="discounts" element={<AdminDiscounts />} />
           <Route path="sellers"   element={<AdminSellers />} />
-          <Route path="settings"  element={<AdminSettings />} />
         </Route>
 
-        <Route path="/seller" element={<AuthGuard><AdminLayout /></AuthGuard>}>
+        {/* SELLER — sellers only, own layout */}
+        <Route
+          path="/seller"
+          element={
+            <AuthGuard>
+              <SellerGuard>
+                <SellerLayout />
+              </SellerGuard>
+            </AuthGuard>
+          }
+        >
           <Route index           element={<SellerDashboard />} />
           <Route path="products" element={<SellerProducts />} />
+          <Route path="orders"   element={<SellerOrders />} />
           <Route path="stats"    element={<SellerStats />} />
         </Route>
 
