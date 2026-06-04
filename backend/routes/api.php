@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) Desk+ contributors
+
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;

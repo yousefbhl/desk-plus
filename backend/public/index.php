@@ -1,5 +1,8 @@
 <?php
 
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) Desk+ contributors
+
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));

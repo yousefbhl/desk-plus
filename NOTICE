@@ -1,0 +1,14 @@
+Desk+ (desk-plus)
+Copyright (c) Desk+ contributors
+
+This project is licensed under GNU General Public License v3.0 only (GPL-3.0-only).
+
+Attribution guidance:
+- Keep this NOTICE file and LICENSE text in redistributions.
+- Preserve SPDX license identifiers and copyright notices in source files.
+- State that reused code originates from the Desk+ project repository:
+  https://github.com/yousefbhl/desk-plus
+
+Enforcement note:
+License violations cannot be fixed by technically deleting code from another project.
+Enforcement is legal (for example, notices, takedown requests, or legal claims).
