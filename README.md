@@ -237,6 +237,23 @@ End-of-study project (PFE) · OFPPT · Module M206 — Cloud Native Application.
 
 ---
 
+## License, Attribution & Enforcement
+
+- This repository is licensed under **GNU GPL v3.0 only** (`GPL-3.0-only`).
+- See `/LICENSE` for full terms and `/NOTICE` for attribution guidance.
+- If you reuse code, keep license headers/notice text and mention the source repo:
+  `https://github.com/yousefbhl/desk-plus`.
+- You cannot technically force-delete copied code from someone else's project.
+  Enforcement is legal (for example: compliance notice, DMCA/takedown request, legal action).
+
+### Traceability recommendations
+
+- Keep clear commit history and release tags.
+- Keep SPDX headers in source files.
+- Keep project-specific naming (`Desk+` / `desk-plus`) in key modules/docs for easier provenance checks.
+
+---
+
 ## Notes
 
 - Never commit your real `.env` — only `.env.example` (with blank values) belongs in git.
